@@ -91,7 +91,7 @@ class FeedState extends AppState {
   /// set tweet for detail tweet page
   /// Setter call when tweet is tapped to view detail
   /// Add Tweet detail is added in _tweetDetailModelList
-  /// It makes `Fwitter` to view nested Tweets
+  /// It makes `Timeline` to view nested Tweets
   set setFeedModel(FeedModel model) {
     _tweetDetailModelList ??= [];
 

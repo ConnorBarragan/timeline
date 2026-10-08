@@ -318,8 +318,8 @@ class _ProfilePageState extends State<ProfilePage>
       socialMetaTagParameters: SocialMetaTagParameters(
         description: !user.bio!.contains("Edit profile")
             ? user.bio
-            : "Checkout ${user.displayName}'s profile on Fwitter app",
-        title: "${user.displayName} is on Fwitter app",
+            : "Checkout ${user.displayName}'s profile on Timeline app",
+        title: "${user.displayName} is on Timeline app",
         imageUrl: Uri.parse(user.profilePic!),
       ),
     );

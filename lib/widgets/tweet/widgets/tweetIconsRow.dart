@@ -137,7 +137,7 @@ class TweetIconsRow extends StatelessWidget {
             customText(Utility.getPostTime2(model.createdAt),
                 style: TextStyles.textStyle14),
             const SizedBox(width: 10),
-            customText('Fwitter for Android',
+            customText('Timeline for Android',
                 style: TextStyle(color: Theme.of(context).primaryColor))
           ],
         ),
