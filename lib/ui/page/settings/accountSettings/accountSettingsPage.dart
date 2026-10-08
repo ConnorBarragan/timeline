@@ -43,7 +43,7 @@ class AccountSettingsPage extends StatelessWidget {
             secondHeader: true,
           ),
           const SettingRowWidget("Country"),
-          const SettingRowWidget("Your Fwitter data"),
+          const SettingRowWidget("Your Timeline data"),
           const SettingRowWidget("Apps and sessions"),
           SettingRowWidget(
             "Log out",

@@ -143,7 +143,7 @@ class DisplayAndSoundPage extends StatelessWidget {
           const SettingRowWidget(
             "Emoji",
             subtitle:
-                'Use the Fwitter set instead of your device\'s default set',
+                'Use the Timeline set instead of your device\'s default set',
             showDivider: false,
             showCheckBox: false,
           ),
@@ -162,7 +162,7 @@ class DisplayAndSoundPage extends StatelessWidget {
           ),
           const SettingRowWidget(
             "Use in-app browser",
-            subtitle: 'Open external links with Fwitter browser',
+            subtitle: 'Open external links with Timeline browser',
             showCheckBox: false,
           ),
         ],
