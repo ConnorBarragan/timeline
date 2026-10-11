@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/helper/customRoute.dart';
-import 'package:flutter_twitter_clone/helper/enum.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/model/feedModel.dart';
-import 'package:flutter_twitter_clone/state/authState.dart';
-import 'package:flutter_twitter_clone/state/feedState.dart';
-import 'package:flutter_twitter_clone/ui/page/common/usersListPage.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
-import 'package:flutter_twitter_clone/widgets/tweet/widgets/tweetBottomSheet.dart';
+import 'package:twitter_one/helper/customRoute.dart';
+import 'package:twitter_one/helper/enum.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/model/feedModel.dart';
+import 'package:twitter_one/state/authState.dart';
+import 'package:twitter_one/state/feedState.dart';
+import 'package:twitter_one/ui/page/common/usersListPage.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/customWidgets.dart';
+import 'package:twitter_one/widgets/tweet/widgets/tweetBottomSheet.dart';
 import 'package:provider/provider.dart';
 
 class TweetIconsRow extends StatelessWidget {

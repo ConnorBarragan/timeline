@@ -8,11 +8,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_twitter_clone/helper/enum.dart';
-import 'package:flutter_twitter_clone/helper/shared_prefrence_helper.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/model/user.dart';
-import 'package:flutter_twitter_clone/ui/page/common/locator.dart';
+import 'package:twitter_one/helper/enum.dart';
+import 'package:twitter_one/helper/shared_prefrence_helper.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/model/user.dart';
+import 'package:twitter_one/ui/page/common/locator.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path/path.dart' as path;
 

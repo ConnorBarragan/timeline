@@ -1,6 +1,6 @@
 # Contributing Guide
 
-Timeline app is Open Source! I love it when people contribute!
+TwitterOne app is Open Source! I love it when people contribute!
 
 ## Getting Started
 
@@ -20,15 +20,15 @@ Timeline app is Open Source! I love it when people contribute!
 
 ## Code Style
 
-Timeline follows the [Dart Style Guide](https://www.dartlang.org/articles/style-guide/). Please note that if your code is not formatted according to the guide as much as possible, we will reject your Pull Request until it is fixed. Some things such as long lines will generally be accepted, however try to make it smaller if possible.
+TwitterOne follows the [Dart Style Guide](https://www.dartlang.org/articles/style-guide/). Please note that if your code is not formatted according to the guide as much as possible, we will reject your Pull Request until it is fixed. Some things such as long lines will generally be accepted, however try to make it smaller if possible.
 
 ## Efficiency
 
-Timeline is committed to efficiency as much as possible. If your code is not efficient, then we will probably reject your Pull Request.
+TwitterOne is committed to efficiency as much as possible. If your code is not efficient, then we will probably reject your Pull Request.
 
 ## Rejections
 
-Pull Request rejections are not a bad thing. It just means you need to fix something. Perhaps it is important to define 'rejection' as it is used in this case. A rejection is when a Timeline committer comments on a Pull Request with a comment like 'rejected due to incorrect formatting'.
+Pull Request rejections are not a bad thing. It just means you need to fix something. Perhaps it is important to define 'rejection' as it is used in this case. A rejection is when a TwitterOne committer comments on a Pull Request with a comment like 'rejected due to incorrect formatting'.
 
 ## Contacting Us
 

@@ -4,8 +4,8 @@ import 'dart:ui' as ui;
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/widgets/customFlatButton.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/widgets/customFlatButton.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ShareWidget extends StatefulWidget {

@@ -1,4 +1,4 @@
-import 'package:flutter_twitter_clone/helper/shared_prefrence_helper.dart';
+import 'package:twitter_one/helper/shared_prefrence_helper.dart';
 import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;

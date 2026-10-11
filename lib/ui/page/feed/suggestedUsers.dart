@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/state/authState.dart';
-import 'package:flutter_twitter_clone/state/suggestionUserState.dart';
-import 'package:flutter_twitter_clone/state/searchState.dart';
-import 'package:flutter_twitter_clone/ui/page/common/widget/userListWidget.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customFlatButton.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/customLoader.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/emptyList.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/title_text.dart';
+import 'package:twitter_one/state/authState.dart';
+import 'package:twitter_one/state/suggestionUserState.dart';
+import 'package:twitter_one/state/searchState.dart';
+import 'package:twitter_one/ui/page/common/widget/userListWidget.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/customFlatButton.dart';
+import 'package:twitter_one/widgets/newWidget/customLoader.dart';
+import 'package:twitter_one/widgets/newWidget/emptyList.dart';
+import 'package:twitter_one/widgets/newWidget/title_text.dart';
 import 'package:provider/provider.dart';
 
 class SuggestedUsers extends StatefulWidget {

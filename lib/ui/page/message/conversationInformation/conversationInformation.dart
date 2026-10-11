@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/model/user.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/profilePage.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
-import 'package:flutter_twitter_clone/ui/page/settings/widgets/headerWidget.dart';
-import 'package:flutter_twitter_clone/ui/page/settings/widgets/settingsRowWidget.dart';
-import 'package:flutter_twitter_clone/state/chats/chatState.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customAppBar.dart';
-import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/customUrlText.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/rippleButton.dart';
+import 'package:twitter_one/model/user.dart';
+import 'package:twitter_one/ui/page/profile/profilePage.dart';
+import 'package:twitter_one/ui/page/profile/widgets/circular_image.dart';
+import 'package:twitter_one/ui/page/settings/widgets/headerWidget.dart';
+import 'package:twitter_one/ui/page/settings/widgets/settingsRowWidget.dart';
+import 'package:twitter_one/state/chats/chatState.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/customAppBar.dart';
+import 'package:twitter_one/widgets/customWidgets.dart';
+import 'package:twitter_one/widgets/url_text/customUrlText.dart';
+import 'package:twitter_one/widgets/newWidget/rippleButton.dart';
 import 'package:provider/provider.dart';
 
 class ConversationInformation extends StatelessWidget {

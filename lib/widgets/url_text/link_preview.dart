@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/state/feedState.dart';
+import 'package:twitter_one/state/feedState.dart';
 // import 'package:link_preview_generator/link_preview_generator.dart';
 // ignore: implementation_imports
 // import 'package:link_preview_generator/src/utils/analyzer.dart'

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/state/feedState.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/customUrlText.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/state/feedState.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/url_text/customUrlText.dart';
 import 'package:provider/provider.dart';
 import 'package:translator/translator.dart';
 

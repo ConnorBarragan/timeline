@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/helper/shared_prefrence_helper.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/model/link_media_info.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/link_preview.dart';
+import 'package:twitter_one/helper/shared_prefrence_helper.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/model/link_media_info.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/url_text/link_preview.dart';
 import 'package:http/http.dart' as http;
 
 class CustomLinkMediaInfo extends StatelessWidget {

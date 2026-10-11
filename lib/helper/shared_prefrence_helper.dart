@@ -1,6 +1,6 @@
-import 'package:flutter_twitter_clone/model/link_media_info.dart';
+import 'package:twitter_one/model/link_media_info.dart';
 import 'dart:convert';
-import 'package:flutter_twitter_clone/model/user.dart';
+import 'package:twitter_one/model/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferenceHelper {

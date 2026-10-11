@@ -1,9 +1,9 @@
-## Timeline - Twitter clone in flutter [![GitHub stars](https://img.shields.io/github/stars/Thealphamerc/flutter_twitter_clone?style=social)](https://github.com/login?return_to=%2FTheAlphamerc%flutter_twitter_clone) ![GitHub forks](https://img.shields.io/github/forks/TheAlphamerc/flutter_twitter_clone?style=social) 
+## TwitterOne - Twitter clone in flutter [![GitHub stars](https://img.shields.io/github/stars/Thealphamerc/flutter_twitter_clone?style=social)](https://github.com/login?return_to=%2FTheAlphamerc%flutter_twitter_clone) ![GitHub forks](https://img.shields.io/github/forks/TheAlphamerc/flutter_twitter_clone?style=social) 
 
 A working Twitter clone built in Flutter using Firebase auth,realtime,firestore database and storage.
 
-<a href="https://play.google.com/store/apps/details?id=com.thealphamerc.flutter_twitter_clone">
-  <img width="100%" alt="Timeline Banner" src="https://user-images.githubusercontent.com/37103237/152671482-885fd940-f4ea-4fb6-8baf-816c17b541d7.png">
+<a href="https://play.google.com/store/apps/details?id=com.connorbarragan.twitter_one">
+  <img width="100%" alt="TwitterOne Banner" src="https://user-images.githubusercontent.com/37103237/152671482-885fd940-f4ea-4fb6-8baf-816c17b541d7.png">
 </a>
 
 ![Dart CI](https://github.com/TheAlphamerc/flutter_twitter_clone/workflows/Dart%20CI/badge.svg) ![GitHub pull requests](https://img.shields.io/github/issues-pr/TheAlphamerc/flutter_twitter_clone) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Thealphamerc/flutter_twitter_clone) ![GitHub last commit](https://img.shields.io/github/last-commit/Thealphamerc/flutter_twitter_clone)  ![GitHub issues](https://img.shields.io/github/issues-raw/Thealphamerc/flutter_twitter_clone) [![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/Thealphamerc/flutter_twitter_clone) 
@@ -13,7 +13,7 @@ A working Twitter clone built in Flutter using Firebase auth,realtime,firestore 
 </a>
 
 ## Download App
-<a href="https://play.google.com/store/apps/details?id=com.thealphamerc.flutter_twitter_clone"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="200"></img></a>
+<a href="https://play.google.com/store/apps/details?id=com.connorbarragan.twitter_one"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="200"></img></a>
 
 
 
@@ -21,9 +21,9 @@ A working Twitter clone built in Flutter using Firebase auth,realtime,firestore 
 * App features is mentioned at project section [ Click here](https://github.com/TheAlphamerc/flutter_twitter_clone/projects/1)
 * Messaging chat section status can be seen at [here](https://github.com/TheAlphamerc/flutter_twitter_clone/projects/2)
 
- :boom: Timeline app now uses both firebase `realtime` and `firestore` database.:boom:
-* In branch **firetore** Timeline uses `Firestore` database for app. 
-* In branch **Master** and **realtime_db** Timeline uses `Firebase Realtime` database for app.
+ :boom: TwitterOne app now uses both firebase `realtime` and `firestore` database.:boom:
+* In branch **firetore** TwitterOne uses `Firestore` database for app. 
+* In branch **Master** and **realtime_db** TwitterOne uses `Firebase Realtime` database for app.
 
 
 ## Dependencies
@@ -71,81 +71,9 @@ Notification Page         |  Notification Page         |   Notification Page    
 
 Profile Page                |  Profile Page            |   Profile  Page       | Profile  Page
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_1.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_2.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_4.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_3.jpg?raw=true)|
-
-Search Page                 |  Chat List Page          |   Chat Screen Page    | New Message Page
-:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Search/screenshot_1.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Chat/screenshot_1.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Chat/screenshot_2.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Chat/screenshot_3.jpg?raw=true)|
-
-Settings Page               |  Account Settings Page   |   Privacy and Safety Page | Notification Setting Page
-:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Settings/screenshot_1.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Settings/screenshot_2.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Settings/screenshot_3.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Settings/screenshot_4.jpg?raw=true)|
-
-## Project structure
-
-<details>
-     <summary> Click to expand </summary>
-
-```
-flutter_twitter_clone
-|-- android
-|-- ios
-|-- lib
-|   |-- helper
-|   |   |-- constant.dart
-|   |   |-- customRoute.dart
-|   |   |-- enum.dart
-|   |   |-- routes.dart
-|   |   |-- shared_prefrence_helper.dart
-|   |   |-- utility.dart
-|   |   '-- validator.dart
-|   |-- model
-|   |   |-- bookmarkModel.dart
-|   |   |-- chatModel.dart
-|   |   |-- feedModel.dart
-|   |   |-- link_media_info.dart
-|   |   |-- notificationModel.dart
-|   |   |-- push_notification_model.dart
-|   |   '-- user.dart
-|   |-- resource
-|   |   '-- push_notification_service.dart
-|   |-- state
-|   |   |-- appState.dart
-|   |   |-- authState.dart
-|   |   |-- bookmarkState.dart
-|   |   |-- chats
-|   |   |   '-- chatState.dart
-|   |   |-- feedState.dart
-|   |   |-- notificationState.dart
-|   |   |-- profile_state.dart
-|   |   |-- searchState.dart
-|   |   |-- suggestionUserState.dart
-|   |   '-- base
-|   |       '-- tweetBaseState.dart
-|   |-- ui
-|   |   |-- page
-|   |   |   |-- Auth
-|   |   |   |   |-- forgetPasswordPage.dart
-|   |   |   |   |-- googleLoginButton.dart
-|   |   |   |   |-- signinPage.dart
-|   |   |   |   |-- signupPage.dart
-|   |   |   |   |-- verifyEmail.dart
-|   |   |   |   '-- welcomePage.dart
-|   |   |   |-- bookmark
-|   |   |   |   '-- bookmarkPage.dart
-|   |   |   |-- common
-|   |   |   |   |-- locator.dart
-|   |   |   |   |-- sidebar.dart
-|   |   |   |   |-- splash.dart
-|   |   |   |   |-- updateApp.dart
-|   |   |   |   |-- usersListPage.dart
-|   |   |   |   '-- widget
-|   |   |   |       '-- userListWidget.dart
-|   |   |   |-- feed
-|   |   |   |   |-- composeTweet
-|   |   |   |   |   |-- composeTweet.dart
-|   |   |   |   |   |-- state
-|   |   |   |   |   |   '-- composeTweetState.dart
+![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_1.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_2.jpg?raw=true)|![](https://github.com/TheAlphamerc/flutter_twitter_clone/blob/master/screenshots/Profile/screenshot_4.jpg?raw=true)|![](https://github.com/TheAlpha
+… [3184 chars truncated] …
+   |   |   |   |   '-- composeTweetState.dart
 |   |   |   |   |   '-- widget
 |   |   |   |   |       |-- composeBottomIconWidget.dart
 |   |   |   |   |       |-- composeTweetImage.dart
