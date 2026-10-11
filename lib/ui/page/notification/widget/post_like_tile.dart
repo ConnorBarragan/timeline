@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/model/feedModel.dart';
-import 'package:flutter_twitter_clone/model/user.dart';
-import 'package:flutter_twitter_clone/state/feedState.dart';
-import 'package:flutter_twitter_clone/state/notificationState.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/feedPostDetail.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/profilePage.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/title_text.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/customUrlText.dart';
+import 'package:twitter_one/model/feedModel.dart';
+import 'package:twitter_one/model/user.dart';
+import 'package:twitter_one/state/feedState.dart';
+import 'package:twitter_one/state/notificationState.dart';
+import 'package:twitter_one/ui/page/feed/feedPostDetail.dart';
+import 'package:twitter_one/ui/page/profile/profilePage.dart';
+import 'package:twitter_one/ui/page/profile/widgets/circular_image.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/customWidgets.dart';
+import 'package:twitter_one/widgets/newWidget/title_text.dart';
+import 'package:twitter_one/widgets/url_text/customUrlText.dart';
 import 'package:provider/provider.dart';
 
 class PostLikeTile extends StatelessWidget {

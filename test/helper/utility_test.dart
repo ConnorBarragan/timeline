@@ -1,4 +1,4 @@
-import 'package:flutter_twitter_clone/helper/utility.dart';
+import 'package:twitter_one/helper/utility.dart';
 import 'package:test/test.dart';
 
 void main() {

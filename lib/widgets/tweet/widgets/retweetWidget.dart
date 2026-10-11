@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/helper/enum.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/model/feedModel.dart';
-import 'package:flutter_twitter_clone/state/feedState.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/feedPostDetail.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/rippleButton.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/title_text.dart';
-import 'package:flutter_twitter_clone/widgets/tweet/widgets/tweetImage.dart';
-import 'package:flutter_twitter_clone/widgets/tweet/widgets/unavailableTweet.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/customUrlText.dart';
+import 'package:twitter_one/helper/enum.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/model/feedModel.dart';
+import 'package:twitter_one/state/feedState.dart';
+import 'package:twitter_one/ui/page/feed/feedPostDetail.dart';
+import 'package:twitter_one/ui/page/profile/widgets/circular_image.dart';
+import 'package:twitter_one/ui/theme/theme.dart';
+import 'package:twitter_one/widgets/customWidgets.dart';
+import 'package:twitter_one/widgets/newWidget/rippleButton.dart';
+import 'package:twitter_one/widgets/newWidget/title_text.dart';
+import 'package:twitter_one/widgets/tweet/widgets/tweetImage.dart';
+import 'package:twitter_one/widgets/tweet/widgets/unavailableTweet.dart';
+import 'package:twitter_one/widgets/url_text/customUrlText.dart';
 import 'package:provider/provider.dart';
 
 class RetweetWidget extends StatelessWidget {

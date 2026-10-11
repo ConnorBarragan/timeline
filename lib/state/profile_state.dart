@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/firebase_database.dart' as dabase;
 import 'package:flutter/foundation.dart';
-import 'package:flutter_twitter_clone/helper/enum.dart';
-import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/model/user.dart';
+import 'package:twitter_one/helper/enum.dart';
+import 'package:twitter_one/helper/utility.dart';
+import 'package:twitter_one/model/user.dart';
 
 class ProfileState extends ChangeNotifier {
   ProfileState(this.profileId) {
