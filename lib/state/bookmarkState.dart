@@ -85,4 +85,27 @@ class BookmarkState extends AppState {
       return null;
     }
   }
+
+  /// Remove a bookmarked tweet by its tweet key.
+  ///
+  /// Deletes the entry from `firebase_rtdb:bookmark/{userId}/{tweetKey}` and
+  /// removes the tweet from the local [tweetList] so the UI updates immediately.
+  Future<void> removeBookmark(String tweetKey) async {
+    try {
+      final userId = await getIt<SharedPreferenceHelper>()
+          .getUserProfile()
+          .then((value) => value!.userId!);
+
+      // Remove from Firebase.
+      await kDatabase.child('bookmark').child(userId).child(tweetKey).remove();
+
+      // Remove from local lists.
+      _tweetList?.removeWhere((t) => t.key == tweetKey);
+      _bookmarkList?.removeWhere((b) => b.tweetId == tweetKey);
+
+      notifyListeners();
+    } catch (error) {
+      cprint(error, errorIn: 'removeBookmark');
+    }
+  }
 }
