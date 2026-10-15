@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_twitter_clone/helper/customRoute.dart';
 import 'package:flutter_twitter_clone/helper/utility.dart';
-import 'package:flutter_twitter_clone/ui/page/profile/profilePage.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
 import 'package:flutter_twitter_clone/ui/theme/theme.dart';
+
+// ---------------------------------------------------------------------------
+// Choice – simple data class used by the popup menu in ProfileImageView
+// ---------------------------------------------------------------------------
+class Choice {
+  const Choice({
+    required this.title,
+    required this.icon,
+    this.isEnable = false,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool isEnable;
+}
 
 class ProfileImageView extends StatelessWidget {
   const ProfileImageView({Key? key, required this.avatar}) : super(key: key);
@@ -15,13 +29,13 @@ class ProfileImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const List<Choice> choices = <Choice>[
-      Choice(title: 'Share image link', icon: Icons.share, isEnable: true),
-      Choice(
+    final List<Choice> choices = <Choice>[
+      const Choice(title: 'Share image link', icon: Icons.share, isEnable: true),
+      const Choice(
           title: 'Open in browser',
           icon: Icons.open_in_browser,
           isEnable: true),
-      Choice(title: 'Save', icon: Icons.save),
+      const Choice(title: 'Save', icon: Icons.save),
     ];
     return Scaffold(
       backgroundColor: TwitterColor.white,
