@@ -22,7 +22,7 @@ void main() {
       expect(yesterday, "1d");
 
       var randomDate = Utility.getChatTime("2020-03-19T14:12:46.286410");
-      expect(randomDate, "19 Mar");
+      expect(randomDate, "Mar 19, 2020");
     });
 
     test('Check Social Links', () {
