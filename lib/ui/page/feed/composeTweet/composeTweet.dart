@@ -1,650 +1,691 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_twitter_clone/helper/constant.dart';
 import 'package:flutter_twitter_clone/helper/utility.dart';
 import 'package:flutter_twitter_clone/model/feedModel.dart';
 import 'package:flutter_twitter_clone/model/user.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/state/composeTweetState.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/widget/composeBottomIconWidget.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/widget/composeTweetImage.dart';
-import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/widget/widgetView.dart';
 import 'package:flutter_twitter_clone/state/authState.dart';
 import 'package:flutter_twitter_clone/state/feedState.dart';
 import 'package:flutter_twitter_clone/state/searchState.dart';
+import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/state/composeTweetState.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
-import 'package:flutter_twitter_clone/ui/theme/theme.dart';
-import 'package:flutter_twitter_clone/widgets/customAppBar.dart';
-import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
-import 'package:flutter_twitter_clone/widgets/url_text/customUrlText.dart';
-import 'package:flutter_twitter_clone/widgets/newWidget/title_text.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:translator/translator.dart';
 
+const Color _kPrimary = Color(0xFF1DA1F2);
+const Color _kCardSurface = Color(0xFF14171A);
+
+// ---------------------------------------------------------------------------
+// ComposeTweetPage – kept as a full-page route for back-compat (retweet/reply)
+// ---------------------------------------------------------------------------
+
 class ComposeTweetPage extends StatefulWidget {
-  const ComposeTweetPage(
-      {Key? key, required this.isRetweet, this.isTweet = true})
-      : super(key: key);
+  const ComposeTweetPage({
+    Key? key,
+    required this.isRetweet,
+    this.isTweet = true,
+  }) : super(key: key);
 
   final bool isRetweet;
   final bool isTweet;
+
   @override
-  _ComposeTweetReplyPageState createState() => _ComposeTweetReplyPageState();
+  State<ComposeTweetPage> createState() => _ComposeTweetPageState();
 }
 
-class _ComposeTweetReplyPageState extends State<ComposeTweetPage> {
-  bool isScrollingDown = false;
-  late FeedModel? model;
-  late ScrollController scrollController;
-
+class _ComposeTweetPageState extends State<ComposeTweetPage> {
+  final TextEditingController _controller = TextEditingController();
   File? _image;
-  late TextEditingController _textEditingController;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
-    scrollController.dispose();
-    _textEditingController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  @override
-  void initState() {
-    var feedState = Provider.of<FeedState>(context, listen: false);
-    model = feedState.tweetToReplyModel;
-    scrollController = ScrollController();
-    _textEditingController = TextEditingController();
-    scrollController.addListener(_scrollListener);
-    super.initState();
-  }
+  int get _remaining => 280 - _controller.text.length;
+  bool get _canSubmit =>
+      _controller.text.isNotEmpty &&
+      _controller.text.length <= 280 &&
+      !_isSubmitting;
 
-  _scrollListener() {
-    if (scrollController.position.userScrollDirection ==
-        ScrollDirection.reverse) {
-      if (!isScrollingDown) {
-        Provider.of<ComposeTweetState>(context, listen: false)
-            .setIsScrollingDown = true;
-      }
-    }
-    if (scrollController.position.userScrollDirection ==
-        ScrollDirection.forward) {
-      Provider.of<ComposeTweetState>(context, listen: false)
-          .setIsScrollingDown = false;
-    }
-  }
+  Future<void> _submit() async {
+    if (!_canSubmit) return;
+    setState(() => _isSubmitting = true);
 
-  void _onCrossIconPressed() {
-    setState(() {
-      _image = null;
-    });
-  }
+    final feedState = Provider.of<FeedState>(context, listen: false);
+    final authState = Provider.of<AuthState>(context, listen: false);
+    final composeState =
+        Provider.of<ComposeTweetState>(context, listen: false);
+    final searchState = Provider.of<SearchState>(context, listen: false);
 
-  void _onImageIconSelected(File file) {
-    setState(() {
-      _image = file;
-    });
-  }
-
-  /// Submit tweet to save in firebase database
-  void _submitButton() async {
-    if (_textEditingController.text.isEmpty ||
-        _textEditingController.text.length > 280) {
-      return;
-    }
-    var state = Provider.of<FeedState>(context, listen: false);
     kScreenLoader.showLoader(context);
 
-    FeedModel tweetModel = await createTweetModel();
+    final tweetModel = await _buildTweetModel(authState, feedState);
     String? tweetId;
 
-    /// If tweet contain image
-    /// First image is uploaded on firebase storage
-    /// After successful image upload to firebase storage it returns image path
-    /// Add this image path to tweet model and save to firebase database
     if (_image != null) {
-      await state.uploadFile(_image!).then((imagePath) async {
-        if (imagePath != null) {
-          tweetModel.imagePath = imagePath;
-
-          /// If type of tweet is new tweet
-          if (widget.isTweet) {
-            tweetId = await state.createTweet(tweetModel);
-          }
-
-          /// If type of tweet is  retweet
-          else if (widget.isRetweet) {
-            tweetId = await state.createReTweet(tweetModel);
-          }
-
-          /// If type of tweet is new comment tweet
-          else {
-            tweetId = await state.addCommentToPost(tweetModel);
-          }
-        }
-      });
+      final imagePath = await feedState.uploadFile(_image!);
+      if (imagePath != null) {
+        tweetModel.imagePath = imagePath;
+        tweetId = await _postTweet(feedState, tweetModel);
+      }
+    } else {
+      tweetId = await _postTweet(feedState, tweetModel);
     }
 
-    /// If tweet did not contain image
-    else {
-      /// If type of tweet is new tweet
-      if (widget.isTweet) {
-        tweetId = await state.createTweet(tweetModel);
-      }
-
-      /// If type of tweet is  retweet
-      else if (widget.isRetweet) {
-        tweetId = await state.createReTweet(tweetModel);
-      }
-
-      /// If type of tweet is new comment tweet
-      else {
-        tweetId = await state.addCommentToPost(tweetModel);
-      }
-    }
     tweetModel.key = tweetId;
 
-    /// Checks for username in tweet description
-    /// If username found, sends notification to all tagged user
-    /// If no user found, compose tweet screen is closed and redirect back to home page.
-    await Provider.of<ComposeTweetState>(context, listen: false)
-        .sendNotification(
-            tweetModel, Provider.of<SearchState>(context, listen: false))
-        .then((_) {
-      /// Hide running loader on screen
+    await composeState.sendNotification(tweetModel, searchState).then((_) {
       kScreenLoader.hideLoader();
-
-      /// Navigate back to home page
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     });
   }
 
-  /// Return Tweet model which is either a new Tweet , retweet model or comment model
-  /// If tweet is new tweet then `parentkey` and `childRetwetkey` should be null
-  /// IF tweet is a comment then it should have `parentkey`
-  /// IF tweet is a retweet then it should have `childRetwetkey`
-  Future<FeedModel> createTweetModel() async {
-    var state = Provider.of<FeedState>(context, listen: false);
-    var authState = Provider.of<AuthState>(context, listen: false);
-    var myUser = authState.userModel;
-    var profilePic = myUser!.profilePic ?? Constants.dummyProfilePic;
+  Future<String?> _postTweet(FeedState state, FeedModel model) async {
+    if (widget.isTweet) return state.createTweet(model);
+    if (widget.isRetweet) return state.createReTweet(model);
+    return state.addCommentToPost(model);
+  }
 
-    /// User who are creating reply tweet
-    var commentedUser = UserModel(
-        displayName: myUser.displayName ?? myUser.email!.split('@')[0],
-        profilePic: profilePic,
-        userId: myUser.userId,
-        isVerified: authState.userModel!.isVerified,
-        userName: authState.userModel!.userName);
-    var tags = Utility.getHashTags(_textEditingController.text);
-    FeedModel reply = FeedModel(
-        description: _textEditingController.text,
-        lanCode:
-            (await GoogleTranslator().translate(_textEditingController.text))
-                .sourceLanguage
-                .code,
-        user: commentedUser,
-        createdAt: DateTime.now().toUtc().toString(),
-        tags: tags,
-        parentkey: widget.isTweet
-            ? null
-            : widget.isRetweet
-                ? null
-                : state.tweetToReplyModel!.key,
-        childRetwetkey: widget.isTweet
-            ? null
-            : widget.isRetweet
-                ? model!.key
-                : null,
-        userId: myUser.userId!);
-    return reply;
+  Future<FeedModel> _buildTweetModel(
+      AuthState authState, FeedState feedState) async {
+    final myUser = authState.userModel!;
+    final profilePic = myUser.profilePic ?? Constants.dummyProfilePic;
+    final commentedUser = UserModel(
+      displayName: myUser.displayName ?? myUser.email!.split('@')[0],
+      profilePic: profilePic,
+      userId: myUser.userId,
+      isVerified: myUser.isVerified,
+      userName: myUser.userName,
+    );
+    final tags = Utility.getHashTags(_controller.text);
+    return FeedModel(
+      description: _controller.text,
+      lanCode: (await GoogleTranslator().translate(_controller.text))
+          .sourceLanguage
+          .code,
+      user: commentedUser,
+      createdAt: DateTime.now().toUtc().toString(),
+      tags: tags,
+      parentkey: widget.isTweet
+          ? null
+          : widget.isRetweet
+              ? null
+              : feedState.tweetToReplyModel?.key,
+      childRetwetkey: widget.isTweet
+          ? null
+          : widget.isRetweet
+              ? feedState.tweetToReplyModel?.key
+              : null,
+      userId: myUser.userId!,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = Provider.of<AuthState>(context, listen: false);
     return Scaffold(
-      appBar: CustomAppBar(
-        title: customTitleText(''),
-        onActionPressed: _submitButton,
-        isCrossButton: true,
-        submitButtonText: widget.isTweet
-            ? 'Tweet'
-            : widget.isRetweet
-                ? 'Retweet'
-                : 'Reply',
-        isSubmitDisable:
-            !Provider.of<ComposeTweetState>(context).enableSubmitButton ||
-                Provider.of<FeedState>(context).isBusy,
-        isBottomLine: Provider.of<ComposeTweetState>(context).isScrollingDown,
-      ),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        //!Removed container
-        children: <Widget>[
-          SingleChildScrollView(
-            controller: scrollController,
-            child:
-                widget.isRetweet ? _ComposeRetweet(this) : _ComposeTweet(this),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: ComposeBottomIconWidget(
-              textEditingController: _textEditingController,
-              onImageIconSelected: _onImageIconSelected,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComposeRetweet
-    extends WidgetView<ComposeTweetPage, _ComposeTweetReplyPageState> {
-  const _ComposeRetweet(this.viewState) : super(viewState);
-
-  final _ComposeTweetReplyPageState viewState;
-  Widget _tweet(BuildContext context, FeedModel model) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        // SizedBox(width: 10),
-
-        const SizedBox(width: 20),
-        SizedBox(
-          width: context.width - 12,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  SizedBox(
-                    width: 25,
-                    height: 25,
-                    child: CircularImage(path: model.user!.profilePic),
-                  ),
-                  const SizedBox(width: 10),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                        minWidth: 0, maxWidth: context.width * .5),
-                    child: TitleText(model.user!.displayName!,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        overflow: TextOverflow.ellipsis),
-                  ),
-                  const SizedBox(width: 3),
-                  model.user!.isVerified!
-                      ? customIcon(
-                          context,
-                          icon: AppIcon.blueTick,
-                          isTwitterIcon: true,
-                          iconColor: AppColor.primary,
-                          size: 13,
-                          paddingIcon: 3,
-                        )
-                      : const SizedBox(width: 0),
-                  SizedBox(width: model.user!.isVerified! ? 5 : 0),
-                  Flexible(
-                    child: customText(
-                      '${model.user!.userName}',
-                      style: TextStyles.userNameStyle,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  customText('· ${Utility.getChatTime(model.createdAt)}',
-                      style: TextStyles.userNameStyle),
-                  const Expanded(child: SizedBox()),
-                ],
-              ),
-            ],
-          ),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: _kCardSurface),
+          onPressed: () => Navigator.pop(context),
         ),
-        if (model.description != null)
-          UrlText(
-            text: model.description!,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-            urlStyle: const TextStyle(
-                color: Colors.blue, fontWeight: FontWeight.w400),
-          ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var authState = Provider.of<AuthState>(context);
-    return SizedBox(
-      height: context.height,
-      child: Column(
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child:
-                    CircularImage(path: authState.user?.photoURL, height: 40),
-              ),
-              Expanded(
-                child: _TextField(
-                  isTweet: false,
-                  isRetweet: true,
-                  textEditingController: viewState._textEditingController,
-                ),
-              ),
-              const SizedBox(
-                width: 16,
-              )
-            ],
-          ),
+        actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16, left: 80, bottom: 8),
-            child: ComposeTweetImage(
-              image: viewState._image,
-              onCrossIconPressed: viewState._onCrossIconPressed,
-            ),
-          ),
-          Flexible(
-            child: Stack(
-              children: <Widget>[
-                Wrap(
-                  children: <Widget>[
-                    Container(
-                      margin: const EdgeInsets.only(
-                          left: 75, right: 16, bottom: 16),
-                      padding: const EdgeInsets.all(8),
-                      alignment: Alignment.topCenter,
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              color: AppColor.extraLightGrey, width: .5),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(15))),
-                      child: _tweet(context, viewState.model!),
-                    ),
-                  ],
+            padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+            child: ElevatedButton(
+              onPressed: _canSubmit ? _submit : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                _UserList(
-                  list: Provider.of<SearchState>(context).userlist,
-                  textEditingController: viewState._textEditingController,
-                )
-              ],
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      'Tweet',
+                      style: GoogleFonts.mulish(fontWeight: FontWeight.w800),
+                    ),
             ),
           ),
-          const SizedBox(height: 50)
         ],
+      ),
+      body: _ComposeTweetBody(
+        controller: _controller,
+        image: _image,
+        remaining: _remaining,
+        onImageSelected: (f) => setState(() => _image = f),
+        onImageRemoved: () => setState(() => _image = null),
+        onChanged: (_) => setState(() {}),
+        profilePic: authState.userModel?.profilePic,
+        isTweet: widget.isTweet,
+        isRetweet: widget.isRetweet,
       ),
     );
   }
 }
 
-class _ComposeTweet
-    extends WidgetView<ComposeTweetPage, _ComposeTweetReplyPageState> {
-  const _ComposeTweet(this.viewState) : super(viewState);
+// ---------------------------------------------------------------------------
+// Shared compose body (used by both full-page and bottom-sheet variants)
+// ---------------------------------------------------------------------------
 
-  final _ComposeTweetReplyPageState viewState;
+class _ComposeTweetBody extends StatelessWidget {
+  const _ComposeTweetBody({
+    Key? key,
+    required this.controller,
+    required this.image,
+    required this.remaining,
+    required this.onImageSelected,
+    required this.onImageRemoved,
+    required this.onChanged,
+    this.profilePic,
+    this.isTweet = true,
+    this.isRetweet = false,
+  }) : super(key: key);
 
-  Widget _tweetCard(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Stack(
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.only(left: 30),
-              margin: const EdgeInsets.only(left: 20, top: 20, bottom: 3),
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    width: 2.0,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    width: context.width - 72,
-                    child: UrlText(
-                      text: viewState.model!.description ?? '',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      urlStyle: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  UrlText(
-                    text:
-                        'Replying to ${viewState.model!.user!.userName ?? viewState.model!.user!.displayName}',
-                    style: TextStyle(
-                      color: TwitterColor.paleSky,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                CircularImage(
-                    path: viewState.model!.user!.profilePic, height: 40),
-                const SizedBox(width: 10),
-                ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minWidth: 0, maxWidth: context.width * .5),
-                  child: TitleText(viewState.model!.user!.displayName!,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      overflow: TextOverflow.ellipsis),
-                ),
-                const SizedBox(width: 3),
-                viewState.model!.user!.isVerified!
-                    ? customIcon(
-                        context,
-                        icon: AppIcon.blueTick,
-                        isTwitterIcon: true,
-                        iconColor: AppColor.primary,
-                        size: 13,
-                        paddingIcon: 3,
-                      )
-                    : const SizedBox(width: 0),
-                SizedBox(width: viewState.model!.user!.isVerified! ? 5 : 0),
-                customText('${viewState.model!.user!.userName}',
-                    style: TextStyles.userNameStyle.copyWith(fontSize: 15)),
-                const SizedBox(width: 5),
-                Padding(
-                  padding: const EdgeInsets.only(top: 3),
-                  child: customText(
-                      '- ${Utility.getChatTime(viewState.model!.createdAt)}',
-                      style: TextStyles.userNameStyle.copyWith(fontSize: 12)),
-                )
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var authState = Provider.of<AuthState>(context, listen: false);
-    return Container(
-      height: context.height,
-      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          viewState.widget.isTweet
-              ? const SizedBox.shrink()
-              : _tweetCard(context),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              CircularImage(path: authState.user?.photoURL, height: 40),
-              const SizedBox(
-                width: 10,
-              ),
-              Expanded(
-                child: _TextField(
-                  isTweet: widget.isTweet,
-                  textEditingController: viewState._textEditingController,
-                ),
-              )
-            ],
-          ),
-          Flexible(
-            child: Stack(
-              children: <Widget>[
-                ComposeTweetImage(
-                  image: viewState._image,
-                  onCrossIconPressed: viewState._onCrossIconPressed,
-                ),
-                _UserList(
-                  list: Provider.of<SearchState>(context).userlist,
-                  textEditingController: viewState._textEditingController,
-                )
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TextField extends StatelessWidget {
-  const _TextField(
-      {Key? key,
-      required this.textEditingController,
-      this.isTweet = false,
-      this.isRetweet = false})
-      : super(key: key);
-  final TextEditingController textEditingController;
+  final TextEditingController controller;
+  final File? image;
+  final int remaining;
+  final ValueChanged<File> onImageSelected;
+  final VoidCallback onImageRemoved;
+  final ValueChanged<String> onChanged;
+  final String? profilePic;
   final bool isTweet;
   final bool isRetweet;
 
   @override
   Widget build(BuildContext context) {
-    final searchState = Provider.of<SearchState>(context, listen: false);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        TextField(
-          controller: textEditingController,
-          onChanged: (text) {
-            Provider.of<ComposeTweetState>(context, listen: false)
-                .onDescriptionChanged(text, searchState);
-          },
-          maxLines: null,
-          decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: isTweet
-                  ? 'What\'s happening?'
-                  : isRetweet
-                      ? 'Add a comment'
-                      : 'Tweet your reply',
-              hintStyle: const TextStyle(fontSize: 18)),
-        ),
-      ],
-    );
-  }
-}
-
-class _UserList extends StatelessWidget {
-  const _UserList({Key? key, this.list, required this.textEditingController})
-      : super(key: key);
-  final List<UserModel>? list;
-  final TextEditingController textEditingController;
-
-  @override
-  Widget build(BuildContext context) {
-    return !Provider.of<ComposeTweetState>(context).displayUserList ||
-            list == null ||
-            list!.length < 0 ||
-            list!.isEmpty
-        ? const SizedBox.shrink()
-        : Container(
-            padding: const EdgeInsetsDirectional.only(bottom: 50),
-            color: TwitterColor.white,
-            constraints:
-                const BoxConstraints(minHeight: 30, maxHeight: double.infinity),
-            child: ListView.builder(
-              itemCount: list!.length,
-              physics: ClampingScrollPhysics(),
-              itemBuilder: (context, index) {
-                return _UserTile(
-                  user: list![index],
-                  onUserSelected: (user) {
-                    textEditingController.text =
-                        Provider.of<ComposeTweetState>(context, listen: false)
-                                .getDescription(user.userName!) +
-                            " ";
-                    textEditingController.selection = TextSelection.collapsed(
-                        offset: textEditingController.text.length);
-                    Provider.of<ComposeTweetState>(context, listen: false)
-                        .onUserSelected();
-                  },
-                );
-              },
-            ),
-          );
-  }
-}
-
-class _UserTile extends StatelessWidget {
-  const _UserTile({Key? key, required this.user, required this.onUserSelected})
-      : super(key: key);
-  final UserModel user;
-  final ValueChanged<UserModel> onUserSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: () {
-        onUserSelected(user);
-      },
-      leading: CircularImage(path: user.profilePic, height: 35),
-      title: Row(
-        children: <Widget>[
-          ConstrainedBox(
-            constraints:
-                BoxConstraints(minWidth: 0, maxWidth: context.width * .5),
-            child: TitleText(user.displayName!,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                overflow: TextOverflow.ellipsis),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircularImage(path: profilePic, height: 40),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Character counter
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$remaining',
+                          style: GoogleFonts.mulish(
+                            color: remaining < 0
+                                ? Colors.red
+                                : remaining < 20
+                                    ? Colors.orange
+                                    : _kPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Text field
+                    Consumer<ComposeTweetState>(
+                      builder: (context, composeState, _) {
+                        return TextField(
+                          controller: controller,
+                          maxLines: null,
+                          autofocus: true,
+                          onChanged: (text) {
+                            onChanged(text);
+                            try {
+                              final searchState = Provider.of<SearchState>(
+                                  context,
+                                  listen: false);
+                              composeState.onDescriptionChanged(
+                                  text, searchState);
+                            } catch (_) {}
+                          },
+                          style: GoogleFonts.mulish(fontSize: 16),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: isTweet
+                                ? "What's happening?"
+                                : isRetweet
+                                    ? 'Add a comment'
+                                    : 'Tweet your reply',
+                            hintStyle: GoogleFonts.mulish(
+                              color: Colors.grey,
+                              fontSize: 16,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Mention suggestion list
+                    Consumer<ComposeTweetState>(
+                      builder: (context, composeState, _) {
+                        if (!composeState.displayUserList) {
+                          return const SizedBox.shrink();
+                        }
+                        final searchState =
+                            Provider.of<SearchState>(context, listen: false);
+                        final users = searchState.userlist;
+                        if (users == null || users.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border:
+                                Border.all(color: const Color(0xFFE1E8ED)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: users.length,
+                            itemBuilder: (context, i) {
+                              final user = users[i];
+                              return ListTile(
+                                leading: CircularImage(
+                                    path: user.profilePic, height: 32),
+                                title: Text(
+                                  user.displayName ?? '',
+                                  style: GoogleFonts.mulish(
+                                      fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: Text(
+                                  '@${user.userName ?? ''}',
+                                  style: GoogleFonts.mulish(
+                                      color: Colors.grey, fontSize: 12),
+                                ),
+                                onTap: () {
+                                  controller.text = composeState
+                                          .getDescription(user.userName!) +
+                                      ' ';
+                                  controller.selection =
+                                      TextSelection.collapsed(
+                                          offset: controller.text.length);
+                                  composeState.onUserSelected();
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 3),
-          user.isVerified!
-              ? customIcon(
-                  context,
-                  icon: AppIcon.blueTick,
-                  isTwitterIcon: true,
-                  iconColor: AppColor.primary,
-                  size: 13,
-                  paddingIcon: 3,
-                )
-              : const SizedBox(width: 0),
+          // Image preview
+          if (image != null) ...[
+            const SizedBox(height: 12),
+            Stack(
+              children: [
+                Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: FileImage(image!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: onImageRemoved,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(Icons.close,
+                          color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          // Bottom toolbar
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.image_outlined, color: _kPrimary),
+                onPressed: () async {
+                  final file = await _pickImage(ImageSource.gallery);
+                  if (file != null) onImageSelected(file);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.camera_alt_outlined, color: _kPrimary),
+                onPressed: () async {
+                  final file = await _pickImage(ImageSource.camera);
+                  if (file != null) onImageSelected(file);
+                },
+              ),
+            ],
+          ),
         ],
       ),
-      subtitle: Text(user.userName!),
+    );
+  }
+
+  Future<File?> _pickImage(ImageSource source) async {
+    try {
+      final xfile =
+          await ImagePicker().pickImage(source: source, imageQuality: 20);
+      if (xfile == null) return null;
+      return File(xfile.path);
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ComposeTweetBottomSheet – inline bottom-sheet compose (used from FeedPage FAB)
+// ---------------------------------------------------------------------------
+
+class ComposeTweetBottomSheet extends StatefulWidget {
+  const ComposeTweetBottomSheet({Key? key}) : super(key: key);
+
+  @override
+  State<ComposeTweetBottomSheet> createState() =>
+      _ComposeTweetBottomSheetState();
+}
+
+class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
+  final TextEditingController _controller = TextEditingController();
+  File? _image;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  int get _remaining => 280 - _controller.text.length;
+  bool get _canSubmit =>
+      _controller.text.isNotEmpty &&
+      _controller.text.length <= 280 &&
+      !_isSubmitting;
+
+  Future<void> _submit() async {
+    if (!_canSubmit) return;
+    setState(() => _isSubmitting = true);
+
+    final feedState = Provider.of<FeedState>(context, listen: false);
+    final authState = Provider.of<AuthState>(context, listen: false);
+    final composeState =
+        Provider.of<ComposeTweetState>(context, listen: false);
+    final searchState = Provider.of<SearchState>(context, listen: false);
+
+    final myUser = authState.userModel!;
+    final tweetModel = FeedModel(
+      description: _controller.text,
+      userId: myUser.userId!,
+      createdAt: DateTime.now().toUtc().toString(),
+      user: myUser,
+      tags: Utility.getHashTags(_controller.text),
+    );
+
+    if (_image != null) {
+      final imagePath = await feedState.uploadFile(_image!);
+      if (imagePath != null) tweetModel.imagePath = imagePath;
+    }
+
+    final tweetId = await feedState.createTweet(tweetModel);
+    tweetModel.key = tweetId;
+
+    await composeState.sendNotification(tweetModel, searchState);
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = Provider.of<AuthState>(context, listen: false);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: bottomInset + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Header
+          Row(
+            children: [
+              CircularImage(
+                path: authState.userModel?.profilePic,
+                height: 36,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "What's happening?",
+                  style: GoogleFonts.mulish(color: Colors.grey, fontSize: 15),
+                ),
+              ),
+              // Character counter
+              Text(
+                '$_remaining',
+                style: GoogleFonts.mulish(
+                  color: _remaining < 0
+                      ? Colors.red
+                      : _remaining < 20
+                          ? Colors.orange
+                          : _kPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Text field + mention suggestions
+          Consumer<ComposeTweetState>(
+            builder: (context, composeState, _) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _controller,
+                    maxLines: null,
+                    autofocus: true,
+                    onChanged: (text) {
+                      setState(() {});
+                      try {
+                        final searchState =
+                            Provider.of<SearchState>(context, listen: false);
+                        composeState.onDescriptionChanged(text, searchState);
+                      } catch (_) {}
+                    },
+                    style: GoogleFonts.mulish(fontSize: 16),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "What's happening?",
+                    ),
+                  ),
+                  // Mention suggestion list
+                  if (composeState.displayUserList)
+                    Consumer<SearchState>(
+                      builder: (context, searchState, _) {
+                        final users = searchState.userlist;
+                        if (users == null || users.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Container(
+                          constraints: const BoxConstraints(maxHeight: 160),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(
+                                color: const Color(0xFFE1E8ED)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: users.length,
+                            itemBuilder: (context, i) {
+                              final user = users[i];
+                              return ListTile(
+                                dense: true,
+                                leading: CircularImage(
+                                    path: user.profilePic, height: 28),
+                                title: Text(
+                                  user.displayName ?? '',
+                                  style: GoogleFonts.mulish(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
+                                ),
+                                subtitle: Text(
+                                  '@${user.userName ?? ''}',
+                                  style: GoogleFonts.mulish(
+                                      color: Colors.grey, fontSize: 11),
+                                ),
+                                onTap: () {
+                                  _controller.text = composeState
+                                          .getDescription(user.userName!) +
+                                      ' ';
+                                  _controller.selection =
+                                      TextSelection.collapsed(
+                                          offset: _controller.text.length);
+                                  composeState.onUserSelected();
+                                  setState(() {});
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+          // Image preview
+          if (_image != null) ...[
+            const SizedBox(height: 8),
+            Stack(
+              children: [
+                Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: FileImage(_image!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _image = null),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: const Icon(Icons.close,
+                          color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          // Toolbar
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.image_outlined, color: _kPrimary),
+                onPressed: () async {
+                  try {
+                    final xfile = await ImagePicker().pickImage(
+                        source: ImageSource.gallery, imageQuality: 20);
+                    if (xfile != null) {
+                      setState(() => _image = File(xfile.path));
+                    }
+                  } catch (_) {}
+                },
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: _canSubmit ? _submit : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 10),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        'Tweet',
+                        style: GoogleFonts.mulish(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
