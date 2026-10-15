@@ -62,10 +62,8 @@ class _ChatListPageState extends State<ChatListPage> {
 
     final isWide = MediaQuery.of(context).size.width >= _kWideBreakpoint;
     if (isWide) {
-      // Wide: show chat in right panel
       setState(() => _selectedUser = user);
     } else {
-      // Narrow: push to chat screen
       Navigator.pushNamed(context, '/ChatScreenPage');
     }
   }
@@ -126,7 +124,6 @@ class _ChatListPageState extends State<ChatListPage> {
                   ),
                 ),
                 // Right panel: active chat thread
-                // ValueKey forces ChatScreenPage to reinitialize when user changes
                 Expanded(
                   child: _selectedUser == null
                       ? _EmptyChatPanel()
@@ -193,9 +190,18 @@ class _ConversationList extends StatelessWidget {
 
             if (user == null) return const SizedBox.shrink();
 
-            return _ConversationTile(
+            // Derive unread count: if the last message is unseen and was
+            // sent by the other user (not by us), treat it as 1 unread.
+            final authState =
+                Provider.of<AuthState>(context, listen: false);
+            final isUnread = !lastMessage.seen &&
+                lastMessage.senderId != authState.userId;
+            final unreadCount = isUnread ? 1 : 0;
+
+            return _ConversationCard(
               user: user,
               lastMessage: lastMessage,
+              unreadCount: unreadCount,
               isSelected: selectedUserId == user.userId,
               onTap: () => onUserTap(user),
             );
@@ -207,20 +213,22 @@ class _ConversationList extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _ConversationTile – single conversation card
+// _ConversationCard – single conversation card with optional unread badge
 // ---------------------------------------------------------------------------
 
-class _ConversationTile extends StatelessWidget {
-  const _ConversationTile({
+class _ConversationCard extends StatelessWidget {
+  const _ConversationCard({
     Key? key,
     required this.user,
     required this.lastMessage,
+    required this.unreadCount,
     required this.onTap,
     this.isSelected = false,
   }) : super(key: key);
 
   final UserModel user;
   final ChatMessage lastMessage;
+  final int unreadCount;
   final VoidCallback onTap;
   final bool isSelected;
 
@@ -231,76 +239,146 @@ class _ConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasUnread = unreadCount > 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? _kPrimary.withOpacity(0.08) : Colors.white,
+        color: isSelected
+            ? _kPrimary.withOpacity(0.08)
+            : hasUnread
+                ? _kPrimary.withOpacity(0.04)
+                : Colors.white,
         borderRadius: BorderRadius.circular(_kRadius),
         border: Border.all(
-          color: isSelected ? _kPrimary.withOpacity(0.3) : _kExtraLight,
+          color: isSelected
+              ? _kPrimary.withOpacity(0.3)
+              : hasUnread
+                  ? _kPrimary.withOpacity(0.2)
+                  : _kExtraLight,
         ),
       ),
-      child: InkWell(
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(_kRadius),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              // Avatar
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  ProfilePage.getRoute(profileId: user.userId!),
-                ),
-                child: CircularImage(
-                  path: user.profilePic ?? Constants.dummyProfilePic,
-                  height: 48,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Name + last message
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.displayName ?? 'Unknown',
-                      style: GoogleFonts.mulish(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: _kSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _truncateMessage(lastMessage.message) ??
-                          '@${user.userName ?? ''}',
-                      style: GoogleFonts.mulish(
-                        fontSize: 13,
-                        color: _kLightGrey,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Timestamp
-              if (lastMessage.createdAt != null)
-                Text(
-                  Utility.getChatTime(lastMessage.createdAt).toString(),
-                  style: GoogleFonts.mulish(
-                    fontSize: 11,
-                    color: _kLightGrey,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(_kRadius),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                // ── Avatar ──────────────────────────────────────────────
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    ProfilePage.getRoute(profileId: user.userId!),
+                  ),
+                  child: CircularImage(
+                    path: user.profilePic ?? Constants.dummyProfilePic,
+                    height: 48,
                   ),
                 ),
-            ],
+                const SizedBox(width: 12),
+
+                // ── Name + last message ──────────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Display name row
+                      Text(
+                        user.displayName ?? 'Unknown',
+                        style: GoogleFonts.mulish(
+                          fontWeight: hasUnread
+                              ? FontWeight.w900
+                              : FontWeight.w700,
+                          fontSize: 14,
+                          color: _kSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      // Last message preview
+                      Text(
+                        _truncateMessage(lastMessage.message) ??
+                            '@${user.userName ?? ''}',
+                        style: GoogleFonts.mulish(
+                          fontSize: 13,
+                          color: hasUnread ? _kSecondary : _kLightGrey,
+                          fontWeight: hasUnread
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // ── Right column: timestamp + unread badge ───────────────
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Timestamp
+                    if (lastMessage.createdAt != null)
+                      Text(
+                        Utility.getChatTime(lastMessage.createdAt),
+                        style: GoogleFonts.mulish(
+                          fontSize: 11,
+                          color: hasUnread ? _kPrimary : _kLightGrey,
+                          fontWeight: hasUnread
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    // Unread badge
+                    if (hasUnread) ...[
+                      const SizedBox(height: 4),
+                      _UnreadBadge(count: unreadCount),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _UnreadBadge – circular badge with #1DA1F2 background
+// ---------------------------------------------------------------------------
+
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge({Key? key, required this.count}) : super(key: key);
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: const BoxDecoration(
+        color: _kPrimary,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: GoogleFonts.mulish(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }
