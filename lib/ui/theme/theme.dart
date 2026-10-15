@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 part 'app_icons.dart';
 part 'color/light_color.dart';
 part 'text_styles.dart';
 part 'extention.dart';
 
+/// Design tokens for the Timeline Command Center redesign.
+/// Primary colour: #1DA1F2  |  Border radius: 12 px  |  Font: Mulish
+const Color kPrimaryColor = Color(0xFF1DA1F2);
+const double kBorderRadius = 12.0;
+
 class AppTheme {
   static final ThemeData appTheme = ThemeData.light().copyWith(
     scaffoldBackgroundColor: TwitterColor.white,
     brightness: Brightness.light,
-    primaryColor: AppColor.primary,
+    primaryColor: kPrimaryColor,
     cardColor: Colors.white,
     unselectedWidgetColor: Colors.grey,
     bottomSheetTheme: const BottomSheetThemeData(
@@ -16,26 +22,39 @@ class AppTheme {
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: TwitterColor.white,
-      iconTheme: IconThemeData(
-        color: TwitterColor.dodgeBlue,
+      iconTheme: const IconThemeData(
+        color: kPrimaryColor,
       ),
       elevation: 0,
-      // ignore: deprecated_member_use
     ),
     bottomAppBarTheme: ThemeData.light().bottomAppBarTheme.copyWith(
           color: Colors.white,
           elevation: 0,
         ),
     tabBarTheme: TabBarTheme(
-      labelStyle: TextStyles.titleStyle.copyWith(color: TwitterColor.dodgeBlue),
+      labelStyle:
+          TextStyles.titleStyle.copyWith(color: kPrimaryColor),
       unselectedLabelColor: AppColor.darkGrey,
       unselectedLabelStyle:
           TextStyles.titleStyle.copyWith(color: AppColor.darkGrey),
-      labelColor: TwitterColor.dodgeBlue,
+      labelColor: kPrimaryColor,
       labelPadding: const EdgeInsets.symmetric(vertical: 12),
     ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: TwitterColor.dodgeBlue,
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: kPrimaryColor,
+      foregroundColor: Colors.white,
+      shape: CircleBorder(),
+    ),
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kBorderRadius),
+      ),
+    ),
+    cardTheme: CardTheme(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kBorderRadius),
+      ),
+      elevation: 0,
     ),
     colorScheme: const ColorScheme(
       background: Colors.white,
@@ -45,13 +64,14 @@ class AppTheme {
       onSecondary: Colors.white,
       onSurface: Colors.black,
       error: Colors.red,
-      primary: Colors.blue,
-      primaryContainer: Colors.blue,
+      primary: kPrimaryColor,
+      primaryContainer: kPrimaryColor,
       secondary: AppColor.secondary,
       secondaryContainer: AppColor.darkGrey,
       surface: Colors.white,
       brightness: Brightness.light,
     ),
+    textTheme: GoogleFonts.mulishTextTheme(),
   );
 
   static List<BoxShadow> shadow = <BoxShadow>[
