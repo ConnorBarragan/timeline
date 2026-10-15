@@ -13,33 +13,38 @@ import 'package:flutter_twitter_clone/state/feedState.dart';
 import 'package:flutter_twitter_clone/state/notificationState.dart';
 import 'package:flutter_twitter_clone/state/searchState.dart';
 import 'package:flutter_twitter_clone/state/suggestionUserState.dart';
+import 'package:flutter_twitter_clone/state/bookmarkState.dart';
+import 'package:flutter_twitter_clone/ui/page/bookmark/bookmarkPage.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/feedPage.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/feedPostDetail.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/suggestedUsers.dart';
 import 'package:flutter_twitter_clone/ui/page/message/chatListPage.dart';
 import 'package:flutter_twitter_clone/ui/page/notification/notificationPage.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/profilePage.dart';
+import 'package:flutter_twitter_clone/ui/page/search/SearchPage.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'common/locator.dart';
 
 // ---------------------------------------------------------------------------
-// Design tokens
+// Tab indices
 // ---------------------------------------------------------------------------
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kSecondary = Color(0xFF14171A);
-const Color _kExtraLight = Color(0xFFE1E8ED);
-const Color _kBackground = Color(0xFFF5F8FA);
+const int _kFeedTab = 0;
+const int _kExploreTab = 1;
+const int _kNotificationsTab = 2;
+const int _kMessagesTab = 3;
+const int _kBookmarksTab = 4;
 
 // ---------------------------------------------------------------------------
-// HomePage – BottomNavigationBar shell with 4 tabs
+// HomePage – BottomNavigationBar shell with 5 tabs
 //
-// Tabs:  0 = Feed  |  1 = Notifications  |  2 = Messages  |  3 = Profile
+// Tabs:  0 = Feed  |  1 = Explore  |  2 = Notifications
+//        3 = Messages  |  4 = Bookmarks
 //
-// The Profile tab (index 3) pushes ProfilePage as a named route so the user
-// can navigate back to the shell.  The first three tabs are kept alive inside
-// an IndexedStack so scroll position is preserved.
+// All five tabs are kept alive inside an IndexedStack so scroll position is
+// preserved.  A FAB (compose) is shown only when the Feed tab is active.
 // ---------------------------------------------------------------------------
 
 class HomePage extends StatefulWidget {
@@ -54,9 +59,8 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
-  /// Visible tab index (0–2 map to Feed/Notifications/Messages;
-  /// tapping 3 pushes ProfilePage without changing this index).
-  int _currentIndex = 0;
+  /// Currently visible tab index (0–4).
+  int _currentIndex = _kFeedTab;
 
   // ignore: cancel_subscriptions
   late StreamSubscription<PushNotificationModel> _pushNotifSub;
@@ -168,18 +172,12 @@ class _HomePageState extends State<HomePage> {
   // ── Navigation ────────────────────────────────────────────────────────────
 
   void _onTabTap(int index) {
-    if (index == 3) {
-      // Profile tab → push as a full route so the user can navigate back
-      final authState = Provider.of<AuthState>(context, listen: false);
-      if (authState.userModel?.userId != null) {
-        Navigator.push(
-          context,
-          ProfilePage.getRoute(profileId: authState.userModel!.userId!),
-        );
-      }
-      return;
-    }
     setState(() => _currentIndex = index);
+  }
+
+  /// Navigate to ComposeTweetPage (Feed FAB action).
+  void _openCompose() {
+    Navigator.pushNamed(context, '/ComposeTweetPage/tweet');
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -196,7 +194,16 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: _kBackground,
+      backgroundColor: kBackgroundColor,
+      // FAB is only visible on the Feed tab (index 0).
+      floatingActionButton: _currentIndex == _kFeedTab
+          ? FloatingActionButton(
+              onPressed: _openCompose,
+              backgroundColor: kPrimaryColor,
+              tooltip: 'Compose Tweet',
+              child: const Icon(Icons.edit, color: Colors.white),
+            )
+          : null,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -205,10 +212,17 @@ class _HomePageState extends State<HomePage> {
             scaffoldKey: _scaffoldKey,
             refreshIndicatorKey: _refreshIndicatorKey,
           ),
-          // Tab 1 – Notifications
+          // Tab 1 – Explore (existing SearchPage, no redesign required)
+          SearchPage(scaffoldKey: _scaffoldKey),
+          // Tab 2 – Notifications
           NotificationPage(scaffoldKey: _scaffoldKey),
-          // Tab 2 – Messages
+          // Tab 3 – Messages
           ChatListPage(scaffoldKey: _scaffoldKey),
+          // Tab 4 – Bookmarks
+          ChangeNotifierProvider(
+            create: (_) => BookmarkState(),
+            child: const BookmarkPage(),
+          ),
         ],
       ),
       bottomNavigationBar: _HomeBottomNav(
@@ -220,7 +234,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 // ---------------------------------------------------------------------------
-// _HomeBottomNav – 4-item BottomNavigationBar
+// _HomeBottomNav – 5-item BottomNavigationBar
 // ---------------------------------------------------------------------------
 
 class _HomeBottomNav extends StatelessWidget {
@@ -238,15 +252,15 @@ class _HomeBottomNav extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: _kExtraLight)),
+        border: Border(top: BorderSide(color: kExtraLightColor)),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: _kPrimary,
-        unselectedItemColor: _kSecondary,
+        selectedItemColor: kPrimaryColor,
+        unselectedItemColor: kSecondaryColor,
         selectedLabelStyle: GoogleFonts.mulish(
           fontWeight: FontWeight.w700,
           fontSize: 11,
@@ -263,6 +277,11 @@ class _HomeBottomNav extends StatelessWidget {
             label: 'Feed',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.search_outlined),
+            activeIcon: Icon(Icons.search),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.notifications_outlined),
             activeIcon: Icon(Icons.notifications),
             label: 'Notifications',
@@ -273,9 +292,9 @@ class _HomeBottomNav extends StatelessWidget {
             label: 'Messages',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.bookmark_outline),
+            activeIcon: Icon(Icons.bookmark),
+            label: 'Bookmarks',
           ),
         ],
       ),

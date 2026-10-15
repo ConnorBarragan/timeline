@@ -4,25 +4,17 @@ import 'package:flutter_twitter_clone/helper/utility.dart';
 import 'package:flutter_twitter_clone/model/feedModel.dart';
 import 'package:flutter_twitter_clone/state/authState.dart';
 import 'package:flutter_twitter_clone/state/feedState.dart';
+import 'package:flutter_twitter_clone/state/searchState.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/feedPostDetail.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:flutter_twitter_clone/widgets/newWidget/customLoader.dart';
 import 'package:flutter_twitter_clone/widgets/newWidget/emptyList.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
-// Design tokens
-// ---------------------------------------------------------------------------
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kSecondary = Color(0xFF14171A);
-const Color _kLightGrey = Color(0xFFAAB8C2);
-const Color _kExtraLight = Color(0xFFE1E8ED);
-const Color _kBackground = Color(0xFFF5F8FA);
-const double _kRadius = 12.0;
-
-// ---------------------------------------------------------------------------
-// FeedPage – ListView of tweet cards
+// FeedPage – Live Tweet Feed with Online Users stat badge
 // ---------------------------------------------------------------------------
 
 class FeedPage extends StatefulWidget {
@@ -44,43 +36,102 @@ class _FeedPageState extends State<FeedPage>
   @override
   bool get wantKeepAlive => true;
 
-  void _openCompose() {
-    Navigator.pushNamed(context, '/ComposeTweetPage/tweet');
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: _kBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Feed',
-          style: GoogleFonts.mulish(
-            color: _kSecondary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: _kSecondary),
-            tooltip: 'Search',
-            onPressed: () => Navigator.pushNamed(context, '/SearchPage'),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openCompose,
-        backgroundColor: _kPrimary,
-        tooltip: 'Compose Tweet',
-        child: const Icon(Icons.edit, color: Colors.white),
-      ),
+      backgroundColor: kBackgroundColor,
+      appBar: _FeedAppBar(),
       body: _TweetListBody(
         refreshIndicatorKey: widget.refreshIndicatorKey,
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _FeedAppBar – AppBar with title and Online Users stat badge
+// ---------------------------------------------------------------------------
+
+class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _FeedAppBar({Key? key}) : super(key: key);
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: Text(
+        'Feed',
+        style: GoogleFonts.mulish(
+          color: kSecondaryColor,
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
+        ),
+      ),
+      actions: [
+        // Online Users stat badge (bound to firebase_rtdb:profile via SearchState)
+        const _OnlineUsersBadge(),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _OnlineUsersBadge – chip showing the count of registered/online users
+//
+// Bound to firebase_rtdb:profile via SearchState (the same node that
+// getDataFromDatabase() subscribes to).  Displays the total user count as a
+// proxy for "online users" since the Firebase schema has no explicit
+// presence/online field.
+// ---------------------------------------------------------------------------
+
+class _OnlineUsersBadge extends StatelessWidget {
+  const _OnlineUsersBadge({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SearchState>(
+      builder: (context, searchState, _) {
+        final count = searchState.userlist?.length ?? 0;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF17BF63), // green online dot
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '$count online',
+                  style: GoogleFonts.mulish(
+                    color: kPrimaryColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -106,7 +157,7 @@ class _TweetListBody extends StatelessWidget {
           return CustomScreenLoader(
             height: double.infinity,
             width: double.infinity,
-            backgroundColor: _kBackground,
+            backgroundColor: kBackgroundColor,
           );
         }
 
@@ -119,7 +170,7 @@ class _TweetListBody extends StatelessWidget {
 
         return RefreshIndicator(
           key: refreshIndicatorKey,
-          color: _kPrimary,
+          color: kPrimaryColor,
           onRefresh: () async {
             state.getDataFromDatabase();
           },
@@ -135,7 +186,8 @@ class _TweetListBody extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetCard – Material Card with avatar, name, handle, body, optional image
+// _TweetCard – Material Card with avatar, name, handle, body, optional image,
+//              and inline Like / Retweet IconButtons
 // ---------------------------------------------------------------------------
 
 class _TweetCard extends StatelessWidget {
@@ -153,12 +205,12 @@ class _TweetCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(_kRadius),
+        borderRadius: BorderRadius.circular(kCardRadius),
       ),
       elevation: 0,
       color: Colors.white,
       child: InkWell(
-        borderRadius: BorderRadius.circular(_kRadius),
+        borderRadius: BorderRadius.circular(kCardRadius),
         onTap: () {
           final feedState = Provider.of<FeedState>(context, listen: false);
           feedState.getPostDetailFromDatabase(null, model: model);
@@ -185,7 +237,7 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           displayName,
                           style: GoogleFonts.mulish(
-                            color: _kSecondary,
+                            color: kSecondaryColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
@@ -194,7 +246,7 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           '@$userName',
                           style: GoogleFonts.mulish(
-                            color: _kLightGrey,
+                            color: kLightGreyColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -207,7 +259,7 @@ class _TweetCard extends StatelessWidget {
                     Text(
                       Utility.getPostTime2(model.createdAt),
                       style: GoogleFonts.mulish(
-                        color: _kLightGrey,
+                        color: kLightGreyColor,
                         fontSize: 11,
                       ),
                     ),
@@ -221,7 +273,7 @@ class _TweetCard extends StatelessWidget {
                 Text(
                   model.description!,
                   style: GoogleFonts.mulish(
-                    color: _kSecondary,
+                    color: kSecondaryColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
@@ -229,11 +281,11 @@ class _TweetCard extends StatelessWidget {
                 ),
               ],
 
-              // ── Tweet image (Image.network when tweetImage is present) ─
+              // ── Tweet image ────────────────────────────────────────────
               if (hasImage) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(_kRadius),
+                  borderRadius: BorderRadius.circular(kCardRadius),
                   child: Image.network(
                     model.imagePath!,
                     width: double.infinity,
@@ -243,10 +295,10 @@ class _TweetCard extends StatelessWidget {
                       if (progress == null) return child;
                       return Container(
                         height: 180,
-                        color: _kExtraLight,
+                        color: kExtraLightColor,
                         child: const Center(
                           child: CircularProgressIndicator(
-                            color: _kPrimary,
+                            color: kPrimaryColor,
                             strokeWidth: 2,
                           ),
                         ),
@@ -256,28 +308,9 @@ class _TweetCard extends StatelessWidget {
                 ),
               ],
 
-              // ── Stats row ──────────────────────────────────────────────
+              // ── Inline Like + Retweet action row ──────────────────────
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  _StatChip(
-                    icon: Icons.chat_bubble_outline,
-                    count: model.commentCount ?? 0,
-                  ),
-                  const SizedBox(width: 20),
-                  _StatChip(
-                    icon: Icons.repeat,
-                    count: model.retweetCount ?? 0,
-                    color: const Color(0xFF17BF63),
-                  ),
-                  const SizedBox(width: 20),
-                  _StatChip(
-                    icon: Icons.favorite_border,
-                    count: model.likeCount ?? 0,
-                    color: const Color(0xFFE0245E),
-                  ),
-                ],
-              ),
+              _TweetActionRow(model: model),
             ],
           ),
         ),
@@ -287,38 +320,103 @@ class _TweetCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _StatChip – small icon + count label
+// _TweetActionRow – Like, Retweet, and Comment inline IconButtons
 // ---------------------------------------------------------------------------
 
-class _StatChip extends StatelessWidget {
-  const _StatChip({
+class _TweetActionRow extends StatelessWidget {
+  const _TweetActionRow({Key? key, required this.model}) : super(key: key);
+
+  final FeedModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Comment
+        _ActionButton(
+          icon: Icons.chat_bubble_outline,
+          count: model.commentCount ?? 0,
+          activeColor: kPrimaryColor,
+          onTap: () {
+            final feedState =
+                Provider.of<FeedState>(context, listen: false);
+            feedState.setTweetToReply = model;
+            Navigator.pushNamed(context, '/ComposeTweetPage/reply');
+          },
+        ),
+        const SizedBox(width: 16),
+        // Retweet
+        _ActionButton(
+          icon: Icons.repeat,
+          count: model.retweetCount ?? 0,
+          activeColor: kRetweetColor,
+          onTap: () {
+            final feedState =
+                Provider.of<FeedState>(context, listen: false);
+            feedState.setTweetToReply = model;
+            Navigator.pushNamed(context, '/ComposeTweetPage/retweet');
+          },
+        ),
+        const SizedBox(width: 16),
+        // Like
+        _ActionButton(
+          icon: Icons.favorite_border,
+          count: model.likeCount ?? 0,
+          activeColor: kLikeColor,
+          onTap: () {
+            final feedState =
+                Provider.of<FeedState>(context, listen: false);
+            final authState =
+                Provider.of<AuthState>(context, listen: false);
+            feedState.addLikeToTweet(model, authState.userId);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _ActionButton – small icon + count label with tap ripple
+// ---------------------------------------------------------------------------
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
     Key? key,
     required this.icon,
     required this.count,
-    this.color,
+    required this.activeColor,
+    required this.onTap,
   }) : super(key: key);
 
   final IconData icon;
   final int count;
-  final Color? color;
+  final Color activeColor;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? _kLightGrey;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: c),
-        const SizedBox(width: 4),
-        Text(
-          '$count',
-          style: GoogleFonts.mulish(
-            color: c,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 17, color: kLightGreyColor),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: GoogleFonts.mulish(
+                color: kLightGreyColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
