@@ -9,24 +9,25 @@ import 'package:flutter_twitter_clone/state/searchState.dart';
 import 'package:flutter_twitter_clone/ui/page/message/chatScreenPage.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/profilePage.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:flutter_twitter_clone/widgets/newWidget/emptyList.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
-// Design tokens
+// ChatListPage – Messages Tab
+//
+// Shows a scrollable list of chat contacts bound to firebase_rtdb:chatUsers.
+// Each row displays:
+//   • CircleAvatar (profile picture)
+//   • Display name + last-message preview (firebase_rtdb:chats)
+//   • Timestamp
+//   • Unread-count badge (#1DA1F2) when the last message is unseen
+//
+// Cards use 12 px radius, Mulish font, and #1DA1F2 as the primary colour.
 // ---------------------------------------------------------------------------
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kSecondary = Color(0xFF14171A);
-const Color _kLightGrey = Color(0xFFAAB8C2);
-const Color _kExtraLight = Color(0xFFE1E8ED);
-const Color _kBackground = Color(0xFFF5F8FA);
-const double _kRadius = 12.0;
-const double _kWideBreakpoint = 800.0;
 
-// ---------------------------------------------------------------------------
-// ChatListPage – InboxOverview
-// ---------------------------------------------------------------------------
+const double _kWideBreakpoint = 800.0;
 
 class ChatListPage extends StatefulWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
@@ -37,7 +38,11 @@ class ChatListPage extends StatefulWidget {
   _ChatListPageState createState() => _ChatListPageState();
 }
 
-class _ChatListPageState extends State<ChatListPage> {
+class _ChatListPageState extends State<ChatListPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   /// The currently selected user for the right panel (wide screens only).
   UserModel? _selectedUser;
 
@@ -45,9 +50,9 @@ class _ChatListPageState extends State<ChatListPage> {
   void initState() {
     super.initState();
     final chatState = Provider.of<ChatState>(context, listen: false);
-    final state = Provider.of<AuthState>(context, listen: false);
+    final authState = Provider.of<AuthState>(context, listen: false);
     chatState.setIsChatScreenOpen = true;
-    chatState.getUserChatList(state.user!.uid);
+    chatState.getUserChatList(authState.user!.uid);
   }
 
   @override
@@ -70,23 +75,28 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
-      backgroundColor: _kBackground,
+      backgroundColor: kBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           'Messages',
           style: GoogleFonts.mulish(
-            color: _kSecondary,
+            color: kSecondaryColor,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
-        iconTheme: const IconThemeData(color: _kSecondary),
+        iconTheme: const IconThemeData(color: kSecondaryColor),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: kExtraLightColor),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: _kSecondary),
+            icon: const Icon(Icons.settings_outlined, color: kSecondaryColor),
             tooltip: 'DM Settings',
             onPressed: () =>
                 Navigator.pushNamed(context, '/DirectMessagesPage'),
@@ -95,7 +105,7 @@ class _ChatListPageState extends State<ChatListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/NewMessagePage'),
-        backgroundColor: _kPrimary,
+        backgroundColor: kPrimaryColor,
         tooltip: 'New Message',
         child: const Icon(Icons.edit, color: Colors.white),
       ),
@@ -114,7 +124,7 @@ class _ChatListPageState extends State<ChatListPage> {
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       border: Border(
-                        right: BorderSide(color: _kExtraLight),
+                        right: BorderSide(color: kExtraLightColor),
                       ),
                     ),
                     child: _ConversationList(
@@ -126,7 +136,7 @@ class _ChatListPageState extends State<ChatListPage> {
                 // Right panel: active chat thread
                 Expanded(
                   child: _selectedUser == null
-                      ? _EmptyChatPanel()
+                      ? const _EmptyChatPanel()
                       : ChatScreenPage(
                           key: ValueKey(_selectedUser!.userId),
                         ),
@@ -147,7 +157,10 @@ class _ChatListPageState extends State<ChatListPage> {
 }
 
 // ---------------------------------------------------------------------------
-// _ConversationList – left panel / narrow-screen list
+// _ConversationList – scrollable list of chat contacts
+//
+// Bound to firebase_rtdb:chatUsers via ChatState.chatUserList.
+// User profiles are resolved from SearchState.userlist (firebase_rtdb:profile).
 // ---------------------------------------------------------------------------
 
 class _ConversationList extends StatelessWidget {
@@ -190,8 +203,7 @@ class _ConversationList extends StatelessWidget {
 
             if (user == null) return const SizedBox.shrink();
 
-            // Derive unread count: if the last message is unseen and was
-            // sent by the other user (not by us), treat it as 1 unread.
+            // Derive unread: last message unseen and sent by the other user.
             final authState =
                 Provider.of<AuthState>(context, listen: false);
             final isUnread = !lastMessage.seen &&
@@ -213,7 +225,10 @@ class _ConversationList extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _ConversationCard – single conversation card with optional unread badge
+// _ConversationCard – single chat-contact row
+//
+// Shows: avatar, display name, last-message preview, timestamp, unread badge.
+// Card uses 12 px radius (kCardRadius) and Mulish font.
 // ---------------------------------------------------------------------------
 
 class _ConversationCard extends StatelessWidget {
@@ -234,7 +249,7 @@ class _ConversationCard extends StatelessWidget {
 
   String? _truncateMessage(String? message) {
     if (message == null || message.isEmpty) return null;
-    return message.length > 80 ? '${message.substring(0, 80)}...' : message;
+    return message.length > 80 ? '${message.substring(0, 80)}…' : message;
   }
 
   @override
@@ -245,24 +260,24 @@ class _ConversationCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isSelected
-            ? _kPrimary.withOpacity(0.08)
+            ? kPrimaryColor.withOpacity(0.08)
             : hasUnread
-                ? _kPrimary.withOpacity(0.04)
+                ? kPrimaryColor.withOpacity(0.04)
                 : Colors.white,
-        borderRadius: BorderRadius.circular(_kRadius),
+        borderRadius: BorderRadius.circular(kCardRadius),
         border: Border.all(
           color: isSelected
-              ? _kPrimary.withOpacity(0.3)
+              ? kPrimaryColor.withOpacity(0.3)
               : hasUnread
-                  ? _kPrimary.withOpacity(0.2)
-                  : _kExtraLight,
+                  ? kPrimaryColor.withOpacity(0.2)
+                  : kExtraLightColor,
         ),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(_kRadius),
+        borderRadius: BorderRadius.circular(kCardRadius),
         child: InkWell(
-          borderRadius: BorderRadius.circular(_kRadius),
+          borderRadius: BorderRadius.circular(kCardRadius),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -270,10 +285,14 @@ class _ConversationCard extends StatelessWidget {
               children: [
                 // ── Avatar ──────────────────────────────────────────────
                 GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    ProfilePage.getRoute(profileId: user.userId!),
-                  ),
+                  onTap: () {
+                    if (user.userId != null) {
+                      Navigator.push(
+                        context,
+                        ProfilePage.getRoute(profileId: user.userId!),
+                      );
+                    }
+                  },
                   child: CircularImage(
                     path: user.profilePic ?? Constants.dummyProfilePic,
                     height: 48,
@@ -286,29 +305,27 @@ class _ConversationCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Display name row
+                      // Display name
                       Text(
                         user.displayName ?? 'Unknown',
                         style: GoogleFonts.mulish(
-                          fontWeight: hasUnread
-                              ? FontWeight.w900
-                              : FontWeight.w700,
+                          fontWeight:
+                              hasUnread ? FontWeight.w900 : FontWeight.w700,
                           fontSize: 14,
-                          color: _kSecondary,
+                          color: kSecondaryColor,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      // Last message preview
+                      // Last-message preview (firebase_rtdb:chats)
                       Text(
                         _truncateMessage(lastMessage.message) ??
                             '@${user.userName ?? ''}',
                         style: GoogleFonts.mulish(
                           fontSize: 13,
-                          color: hasUnread ? _kSecondary : _kLightGrey,
-                          fontWeight: hasUnread
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                          color: hasUnread ? kSecondaryColor : kLightGreyColor,
+                          fontWeight:
+                              hasUnread ? FontWeight.w600 : FontWeight.w400,
                           height: 1.3,
                         ),
                         maxLines: 2,
@@ -319,24 +336,21 @@ class _ConversationCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
 
-                // ── Right column: timestamp + unread badge ───────────────
+                // ── Timestamp + unread badge ─────────────────────────────
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Timestamp
                     if (lastMessage.createdAt != null)
                       Text(
                         Utility.getChatTime(lastMessage.createdAt),
                         style: GoogleFonts.mulish(
                           fontSize: 11,
-                          color: hasUnread ? _kPrimary : _kLightGrey,
-                          fontWeight: hasUnread
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          color: hasUnread ? kPrimaryColor : kLightGreyColor,
+                          fontWeight:
+                              hasUnread ? FontWeight.w700 : FontWeight.w400,
                         ),
                       ),
-                    // Unread badge
                     if (hasUnread) ...[
                       const SizedBox(height: 4),
                       _UnreadBadge(count: unreadCount),
@@ -353,7 +367,7 @@ class _ConversationCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _UnreadBadge – circular badge with #1DA1F2 background
+// _UnreadBadge – circular counter badge (#1DA1F2 background)
 // ---------------------------------------------------------------------------
 
 class _UnreadBadge extends StatelessWidget {
@@ -367,7 +381,7 @@ class _UnreadBadge extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: const BoxDecoration(
-        color: _kPrimary,
+        color: kPrimaryColor,
         shape: BoxShape.circle,
       ),
       child: Text(
@@ -385,10 +399,12 @@ class _UnreadBadge extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _EmptyChatPanel – placeholder shown in the right panel when no chat is open
+// _EmptyChatPanel – placeholder for the right panel (wide layout)
 // ---------------------------------------------------------------------------
 
 class _EmptyChatPanel extends StatelessWidget {
+  const _EmptyChatPanel({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -399,10 +415,10 @@ class _EmptyChatPanel extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: _kPrimary.withOpacity(0.1),
+              color: kPrimaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.mail_outline, color: _kPrimary, size: 36),
+            child: const Icon(Icons.mail_outline, color: kPrimaryColor, size: 36),
           ),
           const SizedBox(height: 16),
           Text(
@@ -410,7 +426,7 @@ class _EmptyChatPanel extends StatelessWidget {
             style: GoogleFonts.mulish(
               fontWeight: FontWeight.w800,
               fontSize: 18,
-              color: _kSecondary,
+              color: kSecondaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -418,7 +434,7 @@ class _EmptyChatPanel extends StatelessWidget {
             'Choose from your existing conversations\nor start a new one.',
             style: GoogleFonts.mulish(
               fontSize: 14,
-              color: _kLightGrey,
+              color: kLightGreyColor,
               height: 1.5,
             ),
             textAlign: TextAlign.center,

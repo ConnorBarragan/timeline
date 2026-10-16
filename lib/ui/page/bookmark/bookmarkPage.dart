@@ -5,25 +5,22 @@ import 'package:flutter_twitter_clone/state/bookmarkState.dart';
 import 'package:flutter_twitter_clone/state/feedState.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/feedPostDetail.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:flutter_twitter_clone/widgets/newWidget/emptyList.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
-// Design tokens
-// ---------------------------------------------------------------------------
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kSecondary = Color(0xFF14171A);
-const Color _kLightGrey = Color(0xFFAAB8C2);
-const Color _kExtraLight = Color(0xFFE1E8ED);
-const Color _kBackground = Color(0xFFF5F8FA);
-const double _kRadius = 12.0;
-
-// ---------------------------------------------------------------------------
-// BookmarkPage – BookmarkShelf
+// BookmarkPage – Bookmarks Tab
+//
+// AppBar shows a "Bookmark Count" stat bound to bookmarkState.tweetList.
+// Body is a scrollable ListView of saved tweet cards, each with a trailing
+// delete IconButton that calls bookmarkState.removeBookmark().
+// Cards use 12 px radius, Mulish font, and #1DA1F2 primary colour.
 // ---------------------------------------------------------------------------
 
-class BookmarkPage extends StatelessWidget {
+class BookmarkPage extends StatefulWidget {
   const BookmarkPage({Key? key}) : super(key: key);
 
   static Route<T> getRoute<T>() {
@@ -36,640 +33,388 @@ class BookmarkPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _kBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Bookmarks',
-          style: GoogleFonts.mulish(
-            color: _kSecondary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: _kSecondary),
-      ),
-      body: const _BookmarkShelfBody(),
-    );
-  }
+  State<BookmarkPage> createState() => _BookmarkPageState();
 }
 
-// ---------------------------------------------------------------------------
-// _BookmarkShelfBody – stateful body with tag filter, grid, and list
-// ---------------------------------------------------------------------------
-
-class _BookmarkShelfBody extends StatefulWidget {
-  const _BookmarkShelfBody({Key? key}) : super(key: key);
-
+class _BookmarkPageState extends State<BookmarkPage>
+    with AutomaticKeepAliveClientMixin {
   @override
-  State<_BookmarkShelfBody> createState() => _BookmarkShelfBodyState();
-}
-
-class _BookmarkShelfBodyState extends State<_BookmarkShelfBody> {
-  String? _activeTag; // null = show all
-  String? _expandedTweetKey; // key of the tweet whose preview is expanded
-
-  /// Collect all unique tags from the tweet list.
-  List<String> _collectTags(List<FeedModel> tweets) {
-    final tags = <String>{};
-    for (final tweet in tweets) {
-      if (tweet.tags != null) {
-        tags.addAll(tweet.tags!);
-      }
-    }
-    return tags.toList()..sort();
-  }
-
-  /// Filter tweets by the active tag.
-  List<FeedModel> _filterTweets(List<FeedModel> tweets) {
-    if (_activeTag == null) return tweets;
-    return tweets
-        .where((t) => t.tags != null && t.tags!.contains(_activeTag))
-        .toList();
-  }
-
-  /// Tweets that have an image (for the media grid).
-  List<FeedModel> _mediaTweets(List<FeedModel> tweets) {
-    return tweets
-        .where((t) => t.imagePath != null && t.imagePath!.isNotEmpty)
-        .toList();
-  }
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Consumer<BookmarkState>(
       builder: (context, state, _) {
-        if (state.isbusy) {
-          return const LinearProgressIndicator(color: _kPrimary);
-        }
-
-        final allTweets = state.tweetList ?? [];
-
-        if (allTweets.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 30),
-            child: EmptyList(
-              'No Bookmarks yet',
-              subTitle: 'Tap the bookmark icon on any tweet to save it here.',
-            ),
-          );
-        }
-
-        final tags = _collectTags(allTweets);
-        final filtered = _filterTweets(allTweets);
-        final mediaTweets = _mediaTweets(filtered);
-
-        return CustomScrollView(
-          slivers: [
-            // ── Tag filter chips ──────────────────────────────────────
-            if (tags.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _TagFilterRow(
-                  tags: tags,
-                  activeTag: _activeTag,
-                  onTagChanged: (tag) =>
-                      setState(() => _activeTag = tag),
-                ),
-              ),
-
-            // ── Media grid ───────────────────────────────────────────
-            if (mediaTweets.isNotEmpty) ...[
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Text(
-                    'Media',
-                    style: GoogleFonts.mulish(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: _kSecondary,
-                    ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                sliver: SliverGrid(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 1.0,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final tweet = mediaTweets[index];
-                      return _MediaGridTile(
-                        tweet: tweet,
-                        isExpanded: _expandedTweetKey == tweet.key,
-                        onTap: () => setState(() {
-                          _expandedTweetKey =
-                              _expandedTweetKey == tweet.key
-                                  ? null
-                                  : tweet.key;
-                        }),
-                      );
-                    },
-                    childCount: mediaTweets.length,
-                  ),
-                ),
-              ),
-              // Expanded tweet preview panel (below grid)
-              if (_expandedTweetKey != null)
-                SliverToBoxAdapter(
-                  child: _buildExpandedPreview(
-                    context,
-                    allTweets.firstWhere(
-                      (t) => t.key == _expandedTweetKey,
-                      orElse: () => allTweets.first,
-                    ),
-                  ),
-                ),
-            ],
-
-            // ── All bookmarked tweets list ────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'All Bookmarks',
-                  style: GoogleFonts.mulish(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: _kSecondary,
-                  ),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final tweet = filtered[index];
-                    final isExpanded = _expandedTweetKey == tweet.key;
-                    return Column(
-                      children: [
-                        _BookmarkListTile(
-                          tweet: tweet,
-                          isExpanded: isExpanded,
-                          onTap: () => setState(() {
-                            _expandedTweetKey =
-                                isExpanded ? null : tweet.key;
-                          }),
-                        ),
-                        if (isExpanded)
-                          TweetPreviewPanel(tweet: tweet),
-                      ],
-                    );
-                  },
-                  childCount: filtered.length,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
+        final count = state.tweetList?.length ?? 0;
+        return Scaffold(
+          backgroundColor: kBackgroundColor,
+          appBar: _BookmarkAppBar(bookmarkCount: count),
+          body: _BookmarkBody(state: state),
         );
       },
     );
   }
-
-  Widget _buildExpandedPreview(BuildContext context, FeedModel tweet) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: TweetPreviewPanel(tweet: tweet),
-    );
-  }
 }
 
 // ---------------------------------------------------------------------------
-// _TagFilterRow – horizontal chip row derived from tweet tags
+// _BookmarkAppBar – AppBar with title and bookmark count stat badge
 // ---------------------------------------------------------------------------
 
-class _TagFilterRow extends StatelessWidget {
-  const _TagFilterRow({
-    Key? key,
-    required this.tags,
-    required this.activeTag,
-    required this.onTagChanged,
-  }) : super(key: key);
+class _BookmarkAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _BookmarkAppBar({Key? key, required this.bookmarkCount})
+      : super(key: key);
 
-  final List<String> tags;
-  final String? activeTag;
-  final ValueChanged<String?> onTagChanged;
+  final int bookmarkCount;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            // "All" chip
-            FilterChip(
-              label: Text(
-                'All',
-                style: GoogleFonts.mulish(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: activeTag == null ? Colors.white : _kSecondary,
-                ),
-              ),
-              selected: activeTag == null,
-              onSelected: (_) => onTagChanged(null),
-              selectedColor: _kPrimary,
-              backgroundColor: _kBackground,
-              checkmarkColor: Colors.white,
-              side: BorderSide(
-                color: activeTag == null ? _kPrimary : _kExtraLight,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_kRadius),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Tag chips
-            ...tags.map((tag) {
-              final isActive = activeTag == tag;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(
-                    '#$tag',
-                    style: GoogleFonts.mulish(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: isActive ? Colors.white : _kSecondary,
-                    ),
-                  ),
-                  selected: isActive,
-                  onSelected: (_) => onTagChanged(isActive ? null : tag),
-                  selectedColor: _kPrimary,
-                  backgroundColor: _kBackground,
-                  checkmarkColor: Colors.white,
-                  side: BorderSide(
-                    color: isActive ? _kPrimary : _kExtraLight,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(_kRadius),
-                  ),
-                ),
-              );
-            }).toList(),
-          ],
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: Text(
+        'Bookmarks',
+        style: GoogleFonts.mulish(
+          color: kSecondaryColor,
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
         ),
       ),
+      iconTheme: const IconThemeData(color: kSecondaryColor),
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(height: 1, color: kExtraLightColor),
+      ),
+      actions: [
+        // Bookmark count stat badge (bound to firebase_rtdb:bookmark via bookmarkState)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.bookmark, size: 14, color: kPrimaryColor),
+                const SizedBox(width: 4),
+                Text(
+                  '$bookmarkCount saved',
+                  style: GoogleFonts.mulish(
+                    color: kPrimaryColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// _MediaGridTile – single tile in the media GridView
+// _BookmarkBody – loading / empty / list states
 // ---------------------------------------------------------------------------
 
-class _MediaGridTile extends StatelessWidget {
-  const _MediaGridTile({
-    Key? key,
-    required this.tweet,
-    required this.isExpanded,
-    required this.onTap,
-  }) : super(key: key);
+class _BookmarkBody extends StatelessWidget {
+  const _BookmarkBody({Key? key, required this.state}) : super(key: key);
 
-  final FeedModel tweet;
-  final bool isExpanded;
-  final VoidCallback onTap;
+  final BookmarkState state;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_kRadius),
-          border: Border.all(
-            color: isExpanded ? _kPrimary : Colors.transparent,
-            width: 2,
-          ),
+    if (state.isbusy) {
+      return const LinearProgressIndicator(
+        color: kPrimaryColor,
+        minHeight: 3,
+      );
+    }
+
+    final tweets = state.tweetList ?? [];
+
+    if (tweets.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30),
+        child: EmptyList(
+          'No Bookmarks yet',
+          subTitle:
+              'Tap the bookmark icon on any tweet to save it here.',
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(_kRadius),
-          child: Stack(
-            fit: StackFit.expand,
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      itemCount: tweets.length,
+      itemBuilder: (context, index) =>
+          _BookmarkCard(model: tweets[index]),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _BookmarkCard – saved tweet card with trailing remove button
+// ---------------------------------------------------------------------------
+
+class _BookmarkCard extends StatelessWidget {
+  const _BookmarkCard({Key? key, required this.model}) : super(key: key);
+
+  final FeedModel model;
+
+  String _formatTime(String createdAt) {
+    try {
+      final dt = DateTime.parse(createdAt).toLocal();
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+      if (diff.inSeconds < 60) return '${diff.inSeconds}s';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+      if (diff.inHours < 24) return '${diff.inHours}h';
+      return DateFormat('MMM d').format(dt);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = model.user;
+    final displayName = user?.displayName ?? '';
+    final userName = user?.userName ?? '';
+    final hasImage = model.imagePath != null && model.imagePath!.isNotEmpty;
+    final timeLabel = _formatTime(model.createdAt);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kCardRadius),
+        side: const BorderSide(color: kExtraLightColor),
+      ),
+      elevation: 0,
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(kCardRadius),
+        onTap: () {
+          final feedState =
+              Provider.of<FeedState>(context, listen: false);
+          feedState.getPostDetailFromDatabase(null, model: model);
+          Navigator.push(context, FeedPostDetail.getRoute(model.key!));
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
-              CachedNetworkImage(
-                imageUrl: tweet.imagePath!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: _kExtraLight),
-                errorWidget: (_, __, ___) => Container(
-                  color: _kExtraLight,
-                  child: const Icon(Icons.broken_image_outlined,
-                      color: _kLightGrey),
-                ),
-              ),
-              // Gradient overlay
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.5),
+              // ── Header row: avatar + name + handle + time + remove btn ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Avatar
+                  CircularImage(
+                    path: user?.profilePic,
+                    height: 42,
+                  ),
+                  const SizedBox(width: 10),
+                  // Name + handle + time
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                style: GoogleFonts.mulish(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  color: kSecondaryColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (user?.isVerified == true) ...[
+                              const SizedBox(width: 3),
+                              const Icon(
+                                Icons.verified,
+                                size: 15,
+                                color: kPrimaryColor,
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '@$userName · $timeLabel',
+                          style: GoogleFonts.mulish(
+                            fontSize: 13,
+                            color: kLightGreyColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
+                  // Remove / delete bookmark button
+                  _RemoveBookmarkButton(tweetKey: model.key!),
+                ],
               ),
-              // Expand indicator
-              if (isExpanded)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: _kPrimary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.expand_less,
-                        color: Colors.white, size: 14),
+
+              // ── Tweet body ──────────────────────────────────────────────
+              if (model.description != null &&
+                  model.description!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  model.description!,
+                  style: GoogleFonts.mulish(
+                    fontSize: 15,
+                    color: kSecondaryColor,
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
                   ),
                 ),
-              // Author handle at bottom
-              Positioned(
-                left: 8,
-                right: 8,
-                bottom: 8,
+              ],
+
+              // ── Tweet image ─────────────────────────────────────────────
+              if (hasImage) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(kCardRadius),
+                  child: CachedNetworkImage(
+                    imageUrl: model.imagePath!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                    placeholder: (_, __) => Container(
+                      height: 160,
+                      color: kExtraLightColor,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: kPrimaryColor,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              // ── Stat row: likes + retweets + comments ───────────────────
+              const SizedBox(height: 10),
+              _TweetStatRow(model: model),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _RemoveBookmarkButton – trailing delete IconButton
+// ---------------------------------------------------------------------------
+
+class _RemoveBookmarkButton extends StatelessWidget {
+  const _RemoveBookmarkButton({Key? key, required this.tweetKey})
+      : super(key: key);
+
+  final String tweetKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.bookmark_remove_outlined),
+      color: kLightGreyColor,
+      tooltip: 'Remove bookmark',
+      splashRadius: 20,
+      onPressed: () async {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kCardRadius),
+            ),
+            title: Text(
+              'Remove Bookmark',
+              style: GoogleFonts.mulish(
+                fontWeight: FontWeight.w800,
+                color: kSecondaryColor,
+              ),
+            ),
+            content: Text(
+              'Remove this tweet from your bookmarks?',
+              style: GoogleFonts.mulish(color: kSecondaryColor),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
                 child: Text(
-                  '@${tweet.user?.userName ?? ''}',
+                  'Cancel',
+                  style: GoogleFonts.mulish(color: kLightGreyColor),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(
+                  'Remove',
                   style: GoogleFonts.mulish(
-                    color: Colors.white,
-                    fontSize: 11,
+                    color: kLikeColor,
                     fontWeight: FontWeight.w700,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+        if (confirmed == true && context.mounted) {
+          Provider.of<BookmarkState>(context, listen: false)
+              .removeBookmark(tweetKey);
+        }
+      },
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// _BookmarkListTile – single row in the bookmarks list
+// _TweetStatRow – compact like / retweet / comment counts
 // ---------------------------------------------------------------------------
 
-class _BookmarkListTile extends StatelessWidget {
-  const _BookmarkListTile({
-    Key? key,
-    required this.tweet,
-    required this.isExpanded,
-    required this.onTap,
-  }) : super(key: key);
+class _TweetStatRow extends StatelessWidget {
+  const _TweetStatRow({Key? key, required this.model}) : super(key: key);
 
-  final FeedModel tweet;
-  final bool isExpanded;
-  final VoidCallback onTap;
+  final FeedModel model;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_kRadius),
-        border: Border.all(
-          color: isExpanded ? _kPrimary : _kExtraLight,
+    return Row(
+      children: [
+        _StatChip(
+          icon: Icons.favorite_border,
+          count: model.likeCount ?? 0,
+          color: kLikeColor,
         ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(_kRadius),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Avatar
-              CircularImage(path: tweet.user?.profilePic, height: 40),
-              const SizedBox(width: 12),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tweet.user?.displayName ?? '',
-                      style: GoogleFonts.mulish(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: _kSecondary,
-                      ),
-                    ),
-                    if (tweet.description != null &&
-                        tweet.description!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          tweet.description!,
-                          style: GoogleFonts.mulish(
-                            fontSize: 13,
-                            color: _kSecondary,
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    // Tags
-                    if (tweet.tags != null && tweet.tags!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Wrap(
-                          spacing: 4,
-                          children: tweet.tags!
-                              .take(3)
-                              .map((t) => Text(
-                                    '#$t',
-                                    style: GoogleFonts.mulish(
-                                      fontSize: 12,
-                                      color: _kPrimary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Thumbnail (if image)
-              if (tweet.imagePath != null && tweet.imagePath!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: tweet.imagePath!,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                  ),
-                ),
-              // Expand chevron
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  isExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: _kLightGrey,
-                  size: 20,
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(width: 16),
+        _StatChip(
+          icon: Icons.repeat,
+          count: model.retweetCount ?? 0,
+          color: kRetweetColor,
         ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// TweetPreviewPanel – inline expanded tweet card
-// ---------------------------------------------------------------------------
-
-class TweetPreviewPanel extends StatelessWidget {
-  const TweetPreviewPanel({Key? key, required this.tweet}) : super(key: key);
-
-  final FeedModel tweet;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: _kBackground,
-        borderRadius: BorderRadius.circular(_kRadius),
-        border: Border.all(color: _kPrimary.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircularImage(path: tweet.user?.profilePic, height: 36),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tweet.user?.displayName ?? '',
-                        style: GoogleFonts.mulish(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: _kSecondary,
-                        ),
-                      ),
-                      Text(
-                        '@${tweet.user?.userName ?? ''}',
-                        style: GoogleFonts.mulish(
-                          fontSize: 12,
-                          color: _kLightGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Open full tweet button
-                IconButton(
-                  icon: const Icon(Icons.open_in_new,
-                      color: _kPrimary, size: 18),
-                  onPressed: () {
-                    final feedState =
-                        Provider.of<FeedState>(context, listen: false);
-                    feedState.getPostDetailFromDatabase(null, model: tweet);
-                    Navigator.push(
-                        context, FeedPostDetail.getRoute(tweet.key!));
-                  },
-                ),
-              ],
-            ),
-          ),
-          // Tweet text
-          if (tweet.description != null && tweet.description!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Text(
-                tweet.description!,
-                style: GoogleFonts.mulish(
-                  fontSize: 14,
-                  color: _kSecondary,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          // Tweet image
-          if (tweet.imagePath != null && tweet.imagePath!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(_kRadius),
-                child: CachedNetworkImage(
-                  imageUrl: tweet.imagePath!,
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-          // Stats row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Row(
-              children: [
-                _StatChip(
-                  icon: Icons.favorite_outline,
-                  count: tweet.likeCount ?? 0,
-                  color: const Color(0xFFE0245E),
-                ),
-                const SizedBox(width: 16),
-                _StatChip(
-                  icon: Icons.repeat,
-                  count: tweet.retweetCount ?? 0,
-                  color: const Color(0xFF17BF63),
-                ),
-                const SizedBox(width: 16),
-                _StatChip(
-                  icon: Icons.chat_bubble_outline,
-                  count: tweet.commentCount ?? 0,
-                  color: _kPrimary,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(width: 16),
+        _StatChip(
+          icon: Icons.chat_bubble_outline,
+          count: model.commentCount ?? 0,
+          color: kPrimaryColor,
+        ),
+      ],
     );
   }
 }
@@ -691,187 +436,17 @@ class _StatChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 16),
+        Icon(icon, size: 16, color: kLightGreyColor),
         const SizedBox(width: 4),
         Text(
           '$count',
           style: GoogleFonts.mulish(
             fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color,
+            color: kLightGreyColor,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// BookmarkReelWidget – kept for backward compatibility (ProfilePage etc.)
-// ---------------------------------------------------------------------------
-
-class BookmarkReelWidget extends StatelessWidget {
-  const BookmarkReelWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<BookmarkState>(
-      builder: (context, state, _) {
-        if (state.isbusy) {
-          return const SizedBox(
-            height: 3,
-            child: LinearProgressIndicator(color: _kPrimary),
-          );
-        }
-
-        final list = state.tweetList;
-        if (list == null || list.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 30),
-            child: EmptyList(
-              'No Bookmarks yet',
-              subTitle: 'Tap the bookmark icon on any tweet to save it here.',
-            ),
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Saved Tweets',
-                style: GoogleFonts.mulish(
-                  color: _kSecondary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: list.length,
-                itemBuilder: (context, index) =>
-                    _BookmarkMiniCard(model: list[index]),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _BookmarkMiniCard extends StatelessWidget {
-  const _BookmarkMiniCard({Key? key, required this.model}) : super(key: key);
-  final FeedModel model;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final feedState = Provider.of<FeedState>(context, listen: false);
-        feedState.getPostDetailFromDatabase(null, model: model);
-        Navigator.push(context, FeedPostDetail.getRoute(model.key!));
-      },
-      child: Container(
-        width: 140,
-        height: 180,
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: _kSecondary,
-          borderRadius: BorderRadius.circular(_kRadius),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(_kRadius),
-          child: Stack(
-            children: [
-              if (model.imagePath != null && model.imagePath!.isNotEmpty)
-                Positioned.fill(
-                  child: CachedNetworkImage(
-                    imageUrl: model.imagePath!,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                  ),
-                ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        _kSecondary.withOpacity(0.85),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 10,
-                right: 10,
-                bottom: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '@${model.user?.userName ?? ''}',
-                      style: GoogleFonts.mulish(
-                        color: _kPrimary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      model.description ?? '',
-                      style: GoogleFonts.mulish(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: _kPrimary.withOpacity(0.85),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.bookmark,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -885,6 +460,8 @@ class BookmarkPageBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const BookmarkReelWidget();
+    return Consumer<BookmarkState>(
+      builder: (context, state, _) => _BookmarkBody(state: state),
+    );
   }
 }
