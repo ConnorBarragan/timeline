@@ -37,11 +37,24 @@ const Color kRetweetColor = Color(0xFF8C7B72);
 const Color kOffWhiteColor = Color(0xFFF2EDE8);
 
 // ---------------------------------------------------------------------------
+// Timeline Night theme accent colours
+// ---------------------------------------------------------------------------
+
+/// Emerald accent for FeedPage – compose FAB and AppBar online-users badge.
+const Color kEmeraldAccent = Color(0xFF2E9E6B);
+
+/// Tweet card surface colour for FeedPage.
+const Color kTweetCardSurface = Color(0xFF1E2329);
+
+// ---------------------------------------------------------------------------
 // Geometry
 // ---------------------------------------------------------------------------
 
 /// Card and container border-radius (12 px).
 const double kCardRadius = 12.0;
+
+/// Tweet card border-radius (16 px) for FeedPage.
+const double kTweetCardRadius = 16.0;
 
 // ---------------------------------------------------------------------------
 // Typography helpers
