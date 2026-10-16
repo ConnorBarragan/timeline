@@ -20,7 +20,8 @@ import 'package:provider/provider.dart';
 //
 // Shows all notification types (likes, retweets, follows, mentions, replies)
 // sorted newest-first.  Items that reference a tweet show an inline
-// "Referenced Tweet Preview" card (12 px radius, Mulish font, #1DA1F2 accent).
+// "Referenced Tweet Preview" card (12 px radius, Mulish font, rust #C0522B
+// left-border accent).
 // ---------------------------------------------------------------------------
 
 class NotificationPage extends StatefulWidget {
@@ -59,17 +60,17 @@ class _NotificationPageState extends State<NotificationPage>
     return Scaffold(
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: kSecondaryColor,
         elevation: 0,
         title: Text(
           'Notifications',
           style: GoogleFonts.mulish(
-            color: kSecondaryColor,
+            color: kOffWhiteColor,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
-        iconTheme: const IconThemeData(color: kSecondaryColor),
+        iconTheme: const IconThemeData(color: kOffWhiteColor),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, color: kExtraLightColor),
@@ -192,7 +193,8 @@ class _NotificationItem extends StatelessWidget {
         side: const BorderSide(color: kExtraLightColor),
       ),
       elevation: 0,
-      color: Colors.white,
+      // Activity card background: dark card surface #3A2E28
+      color: kExtraLightColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -215,7 +217,7 @@ class _NotificationItem extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: _iconColor.withOpacity(0.12),
+                      color: _iconColor.withOpacity(0.18),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(_icon, color: _iconColor, size: 18),
@@ -237,7 +239,8 @@ class _NotificationItem extends StatelessWidget {
                                 style: GoogleFonts.mulish(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 14,
-                                  color: kSecondaryColor,
+                                  // Display name: off-white #F2EDE8
+                                  color: kOffWhiteColor,
                                 ),
                               ),
                               TextSpan(
@@ -245,6 +248,7 @@ class _NotificationItem extends StatelessWidget {
                                 style: GoogleFonts.mulish(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 14,
+                                  // Action text: taupe #8C7B72
                                   color: kLightGreyColor,
                                 ),
                               ),
@@ -257,6 +261,7 @@ class _NotificationItem extends StatelessWidget {
                             timeLabel,
                             style: GoogleFonts.mulish(
                               fontSize: 12,
+                              // Timestamp: taupe #8C7B72
                               color: kLightGreyColor,
                               fontWeight: FontWeight.w500,
                             ),
@@ -307,7 +312,8 @@ class ReferencedTweetPreview extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _ReferencedTweetPreview – inline tweet snippet (12 px radius, Mulish)
+// _ReferencedTweetPreview – inline tweet snippet
+//   background #2A1F1A, 3 px left border rust #C0522B, radius 12 px, Mulish
 // ---------------------------------------------------------------------------
 
 class _ReferencedTweetPreview extends StatelessWidget {
@@ -354,9 +360,16 @@ class _ReferencedTweetPreview extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
+              // Inset background: darkest cinder #2A1F1A
               color: kBackgroundColor,
               borderRadius: BorderRadius.circular(kCardRadius),
-              border: Border.all(color: kExtraLightColor),
+              // 3 px left border in rust #C0522B; other sides transparent
+              border: Border(
+                left: const BorderSide(color: kPrimaryColor, width: 3),
+                top: BorderSide(color: kExtraLightColor.withOpacity(0.5)),
+                right: BorderSide(color: kExtraLightColor.withOpacity(0.5)),
+                bottom: BorderSide(color: kExtraLightColor.withOpacity(0.5)),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +388,8 @@ class _ReferencedTweetPreview extends StatelessWidget {
                         style: GoogleFonts.mulish(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: kSecondaryColor,
+                          // Author name: off-white #F2EDE8
+                          color: kOffWhiteColor,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -384,6 +398,7 @@ class _ReferencedTweetPreview extends StatelessWidget {
                       '@${tweet.user?.userName ?? ''}',
                       style: GoogleFonts.mulish(
                         fontSize: 12,
+                        // Handle: taupe #8C7B72
                         color: kLightGreyColor,
                       ),
                     ),
@@ -397,7 +412,8 @@ class _ReferencedTweetPreview extends StatelessWidget {
                     tweet.description!,
                     style: GoogleFonts.mulish(
                       fontSize: 13,
-                      color: kSecondaryColor,
+                      // Body text: off-white #F2EDE8
+                      color: kOffWhiteColor,
                       height: 1.4,
                     ),
                     maxLines: 3,
