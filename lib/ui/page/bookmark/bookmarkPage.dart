@@ -12,12 +12,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
-// BookmarkPage – Bookmarks Tab
+// BookmarkPage – Bookmarks Tab  (Cinder Rust palette)
 //
-// AppBar shows a "Bookmark Count" stat bound to bookmarkState.tweetList.
-// Body is a scrollable ListView of saved tweet cards, each with a trailing
-// delete IconButton that calls bookmarkState.removeBookmark().
-// Cards use 12 px radius, Mulish font, and #1DA1F2 primary colour.
+// AppBar background #1C1410 with a rust pill chip badge for bookmark count.
+// Body is a scrollable ListView.separated of saved tweet cards (bg #3A2E28),
+// each with a trailing remove IconButton in rust #C0522B.
+// Dividers between cards use taupe #8C7B72.
 // ---------------------------------------------------------------------------
 
 class BookmarkPage extends StatefulWidget {
@@ -58,7 +58,7 @@ class _BookmarkPageState extends State<BookmarkPage>
 }
 
 // ---------------------------------------------------------------------------
-// _BookmarkAppBar – AppBar with title and bookmark count stat badge
+// _BookmarkAppBar – AppBar #1C1410 with rust pill chip badge
 // ---------------------------------------------------------------------------
 
 class _BookmarkAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -73,42 +73,42 @@ class _BookmarkAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      // Dark charcoal-brown AppBar background (#1C1410)
+      backgroundColor: kSecondaryColor,
       elevation: 0,
       title: Text(
         'Bookmarks',
         style: GoogleFonts.mulish(
-          color: kSecondaryColor,
+          color: kOffWhiteColor,
           fontWeight: FontWeight.w800,
           fontSize: 18,
         ),
       ),
-      iconTheme: const IconThemeData(color: kSecondaryColor),
+      iconTheme: const IconThemeData(color: kOffWhiteColor),
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(1),
         child: Divider(height: 1, color: kExtraLightColor),
       ),
       actions: [
-        // Bookmark count stat badge (bound to firebase_rtdb:bookmark via bookmarkState)
+        // Bookmark count stat badge – rust pill chip (firebase_rtdb:bookmark)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: kPrimaryColor.withOpacity(0.12),
+              // Solid rust fill for the pill chip
+              color: kPrimaryColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.bookmark, size: 14, color: kPrimaryColor),
+                const Icon(Icons.bookmark, size: 14, color: kOffWhiteColor),
                 const SizedBox(width: 4),
                 Text(
                   '$bookmarkCount saved',
                   style: GoogleFonts.mulish(
-                    color: kPrimaryColor,
+                    color: kOffWhiteColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -147,23 +147,28 @@ class _BookmarkBody extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 30),
         child: EmptyList(
           'No Bookmarks yet',
-          subTitle:
-              'Tap the bookmark icon on any tweet to save it here.',
+          subTitle: 'Tap the bookmark icon on any tweet to save it here.',
         ),
       );
     }
 
-    return ListView.builder(
+    // ListView.separated gives taupe #8C7B72 dividers between cards
+    return ListView.separated(
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       itemCount: tweets.length,
-      itemBuilder: (context, index) =>
-          _BookmarkCard(model: tweets[index]),
+      separatorBuilder: (_, __) => const Divider(
+        height: 1,
+        color: kLightGreyColor,
+        indent: 16,
+        endIndent: 16,
+      ),
+      itemBuilder: (context, index) => _BookmarkCard(model: tweets[index]),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// _BookmarkCard – saved tweet card with trailing remove button
+// _BookmarkCard – saved tweet card (bg #3A2E28) with trailing remove button
 // ---------------------------------------------------------------------------
 
 class _BookmarkCard extends StatelessWidget {
@@ -200,7 +205,8 @@ class _BookmarkCard extends StatelessWidget {
         side: const BorderSide(color: kExtraLightColor),
       ),
       elevation: 0,
-      color: Colors.white,
+      // Dark card surface #3A2E28
+      color: kExtraLightColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(kCardRadius),
         onTap: () {
@@ -218,7 +224,7 @@ class _BookmarkCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar
+                  // Avatar (firebase_rtdb:profile via FeedModel.user)
                   CircularImage(
                     path: user?.profilePic,
                     height: 42,
@@ -237,7 +243,8 @@ class _BookmarkCard extends StatelessWidget {
                                 style: GoogleFonts.mulish(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 15,
-                                  color: kSecondaryColor,
+                                  // Off-white display name #F2EDE8
+                                  color: kOffWhiteColor,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -257,6 +264,7 @@ class _BookmarkCard extends StatelessWidget {
                           '@$userName · $timeLabel',
                           style: GoogleFonts.mulish(
                             fontSize: 13,
+                            // Taupe handle/timestamp #8C7B72
                             color: kLightGreyColor,
                             fontWeight: FontWeight.w500,
                           ),
@@ -264,7 +272,7 @@ class _BookmarkCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Remove / delete bookmark button
+                  // Remove / delete bookmark button (rust #C0522B)
                   _RemoveBookmarkButton(tweetKey: model.key!),
                 ],
               ),
@@ -277,7 +285,8 @@ class _BookmarkCard extends StatelessWidget {
                   model.description!,
                   style: GoogleFonts.mulish(
                     fontSize: 15,
-                    color: kSecondaryColor,
+                    // Off-white body text #F2EDE8
+                    color: kOffWhiteColor,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
                   ),
@@ -320,7 +329,7 @@ class _BookmarkCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _RemoveBookmarkButton – trailing delete IconButton
+// _RemoveBookmarkButton – trailing delete IconButton in rust #C0522B
 // ---------------------------------------------------------------------------
 
 class _RemoveBookmarkButton extends StatelessWidget {
@@ -333,13 +342,16 @@ class _RemoveBookmarkButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.bookmark_remove_outlined),
-      color: kLightGreyColor,
+      // Rust remove icon #C0522B
+      color: kPrimaryColor,
       tooltip: 'Remove bookmark',
       splashRadius: 20,
       onPressed: () async {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
+            // Dark dialog surface
+            backgroundColor: kExtraLightColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(kCardRadius),
             ),
@@ -347,12 +359,12 @@ class _RemoveBookmarkButton extends StatelessWidget {
               'Remove Bookmark',
               style: GoogleFonts.mulish(
                 fontWeight: FontWeight.w800,
-                color: kSecondaryColor,
+                color: kOffWhiteColor,
               ),
             ),
             content: Text(
               'Remove this tweet from your bookmarks?',
-              style: GoogleFonts.mulish(color: kSecondaryColor),
+              style: GoogleFonts.mulish(color: kOffWhiteColor),
             ),
             actions: [
               TextButton(
@@ -367,7 +379,7 @@ class _RemoveBookmarkButton extends StatelessWidget {
                 child: Text(
                   'Remove',
                   style: GoogleFonts.mulish(
-                    color: kLikeColor,
+                    color: kPrimaryColor,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
