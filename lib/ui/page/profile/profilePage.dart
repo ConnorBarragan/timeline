@@ -16,13 +16,27 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
-// Design tokens (shared with other redesigned tabs)
+// Cinder Rust design tokens
 // ---------------------------------------------------------------------------
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kSecondary = Color(0xFF14171A);
-const Color _kLightGrey = Color(0xFFAAB8C2);
-const Color _kExtraLight = Color(0xFFE1E8ED);
-const Color _kBackground = Color(0xFFF5F8FA);
+/// Burnt-rust primary – active indicators, FAB, accent icons, avatar ring.
+const Color _kPrimary = Color(0xFFC0522B);
+
+/// Deep charcoal-brown – AppBar background.
+const Color _kSecondary = Color(0xFF1C1410);
+
+/// Taupe – secondary text, timestamps, dividers, borders.
+const Color _kLightGrey = Color(0xFF8C7B72);
+
+/// Dark card surface – tweet cards.
+const Color _kExtraLight = Color(0xFF3A2E28);
+
+/// Darkest cinder – page background, compose body.
+const Color _kBackground = Color(0xFF2A1F1A);
+
+/// Warm off-white – primary text, icon fills on dark surfaces.
+const Color _kOffWhite = Color(0xFFF2EDE8);
+
+/// Card / container border-radius.
 const double _kRadius = 12.0;
 
 // ---------------------------------------------------------------------------
@@ -58,17 +72,17 @@ class _ProfilePageState extends State<ProfilePage>
     return Scaffold(
       backgroundColor: _kBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _kSecondary,
         elevation: 0,
         title: Text(
           'Profile',
           style: GoogleFonts.mulish(
-            color: _kSecondary,
+            color: _kOffWhite,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
-        iconTheme: const IconThemeData(color: _kSecondary),
+        iconTheme: const IconThemeData(color: _kOffWhite),
       ),
       body: _ProfileBody(profileId: widget.profileId),
     );
@@ -112,6 +126,7 @@ class _ProfileBody extends StatelessWidget {
 
     return RefreshIndicator(
       color: _kPrimary,
+      backgroundColor: _kExtraLight,
       onRefresh: () async {
         feedState.getDataFromDatabase();
       },
@@ -128,7 +143,7 @@ class _ProfileBody extends StatelessWidget {
 
           // ── Divider ─────────────────────────────────────────────────────
           const SliverToBoxAdapter(
-            child: Divider(height: 1, color: _kExtraLight),
+            child: Divider(height: 1, color: _kLightGrey),
           ),
 
           // ── Section label ───────────────────────────────────────────────
@@ -139,7 +154,7 @@ class _ProfileBody extends StatelessWidget {
               child: Text(
                 'Tweets',
                 style: GoogleFonts.mulish(
-                  color: _kSecondary,
+                  color: _kOffWhite,
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
@@ -160,8 +175,21 @@ class _ProfileBody extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          _TweetCard(model: userTweets[index]),
+                      (context, index) {
+                        final isLast = index == userTweets.length - 1;
+                        return Column(
+                          children: [
+                            _TweetCard(model: userTweets[index]),
+                            if (!isLast)
+                              const Divider(
+                                height: 1,
+                                color: _kLightGrey,
+                                indent: 12,
+                                endIndent: 12,
+                              ),
+                          ],
+                        );
+                      },
                       childCount: userTweets.length,
                     ),
                   ),
@@ -197,40 +225,51 @@ class _ProfileHeader extends StatelessWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            // Banner image
+            // Banner image with rust-to-cinder gradient overlay
             Container(
               height: 140,
               width: double.infinity,
-              color: _kPrimary.withOpacity(0.15),
-              child: user.bannerImage != null && user.bannerImage!.isNotEmpty
-                  ? Image.network(
+              color: _kSecondary,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Banner photo (if available)
+                  if (user.bannerImage != null && user.bannerImage!.isNotEmpty)
+                    Image.network(
                       user.bannerImage!,
                       fit: BoxFit.cover,
                       width: double.infinity,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     )
-                  : Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _kPrimary.withOpacity(0.6),
-                            _kPrimary.withOpacity(0.2),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                  else
+                    // Fallback: solid rust-tinted cinder background
+                    Container(color: _kExtraLight),
+
+                  // Rust-to-cinder gradient overlay (always applied)
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _kPrimary.withOpacity(0.55),
+                          _kBackground.withOpacity(0.80),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
+                  ),
+                ],
+              ),
             ),
 
-            // Circular avatar overlapping the banner
+            // Circular avatar overlapping the banner – rust ring
             Positioned(
               bottom: -40,
               left: 16,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
+                  border: Border.all(color: _kPrimary, width: 4),
                 ),
                 child: CircularImage(
                   path: user.profilePic ?? Constants.dummyProfilePic,
@@ -262,7 +301,7 @@ class _ProfileHeader extends StatelessWidget {
               Text(
                 user.displayName ?? '',
                 style: GoogleFonts.mulish(
-                  color: _kSecondary,
+                  color: _kOffWhite,
                   fontWeight: FontWeight.w800,
                   fontSize: 20,
                 ),
@@ -288,7 +327,7 @@ class _ProfileHeader extends StatelessWidget {
             child: Text(
               user.bio!,
               style: GoogleFonts.mulish(
-                color: _kSecondary,
+                color: _kLightGrey,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.45,
@@ -414,7 +453,7 @@ class _StatButton extends StatelessWidget {
           Text(
             count,
             style: GoogleFonts.mulish(
-              color: _kSecondary,
+              color: _kPrimary, // counts in rust #C0522B
               fontWeight: FontWeight.w800,
               fontSize: 15,
             ),
@@ -423,7 +462,7 @@ class _StatButton extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.mulish(
-              color: _kLightGrey,
+              color: _kLightGrey, // labels in taupe #8C7B72
               fontWeight: FontWeight.w500,
               fontSize: 14,
             ),
@@ -491,8 +530,8 @@ class _FollowButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: () => profileState.followUser(removeFollower: isFollowing),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isFollowing ? Colors.white : _kPrimary,
-        foregroundColor: isFollowing ? _kPrimary : Colors.white,
+        backgroundColor: isFollowing ? _kExtraLight : _kPrimary,
+        foregroundColor: isFollowing ? _kPrimary : _kOffWhite,
         side: isFollowing ? const BorderSide(color: _kPrimary) : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -512,7 +551,7 @@ class _FollowButton extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetCard – matches the Feed tab card style exactly
+// _TweetCard – Cinder Rust card style matching the Feed tab
 // ---------------------------------------------------------------------------
 
 class _TweetCard extends StatelessWidget {
@@ -528,12 +567,12 @@ class _TweetCard extends StatelessWidget {
     final hasImage = model.imagePath != null && model.imagePath!.isNotEmpty;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_kRadius),
       ),
       elevation: 0,
-      color: Colors.white,
+      color: _kExtraLight, // #3A2E28
       child: InkWell(
         borderRadius: BorderRadius.circular(_kRadius),
         onTap: () {
@@ -562,7 +601,7 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           displayName,
                           style: GoogleFonts.mulish(
-                            color: _kSecondary,
+                            color: _kOffWhite, // display name #F2EDE8
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
@@ -571,7 +610,7 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           '@$userName',
                           style: GoogleFonts.mulish(
-                            color: _kLightGrey,
+                            color: _kLightGrey, // handle #8C7B72
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -584,7 +623,7 @@ class _TweetCard extends StatelessWidget {
                     Text(
                       Utility.getPostTime2(model.createdAt),
                       style: GoogleFonts.mulish(
-                        color: _kLightGrey,
+                        color: _kLightGrey, // timestamp #8C7B72
                         fontSize: 11,
                       ),
                     ),
@@ -598,7 +637,7 @@ class _TweetCard extends StatelessWidget {
                 Text(
                   model.description!,
                   style: GoogleFonts.mulish(
-                    color: _kSecondary,
+                    color: _kOffWhite, // body text #F2EDE8
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
@@ -606,7 +645,7 @@ class _TweetCard extends StatelessWidget {
                 ),
               ],
 
-              // ── Tweet image (Image.network when tweetImage is present) ─
+              // ── Tweet image ────────────────────────────────────────────
               if (hasImage) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
@@ -620,7 +659,7 @@ class _TweetCard extends StatelessWidget {
                       if (progress == null) return child;
                       return Container(
                         height: 180,
-                        color: _kExtraLight,
+                        color: _kBackground,
                         child: const Center(
                           child: CircularProgressIndicator(
                             color: _kPrimary,
@@ -645,13 +684,13 @@ class _TweetCard extends StatelessWidget {
                   _StatChip(
                     icon: Icons.repeat,
                     count: model.retweetCount ?? 0,
-                    color: const Color(0xFF17BF63),
+                    color: _kLightGrey,
                   ),
                   const SizedBox(width: 20),
                   _StatChip(
                     icon: Icons.favorite_border,
                     count: model.likeCount ?? 0,
-                    color: const Color(0xFFE0245E),
+                    color: _kPrimary, // like in rust
                   ),
                 ],
               ),
