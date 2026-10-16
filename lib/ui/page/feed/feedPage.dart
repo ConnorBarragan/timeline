@@ -213,7 +213,9 @@ class _TweetCard extends StatelessWidget {
       onTap: () {
         final feedState = Provider.of<FeedState>(context, listen: false);
         feedState.getPostDetailFromDatabase(model.key, model: model);
-        Navigator.push(context, FeedPostDetail.getRoute(model.key));
+        if (model.key != null) {
+          Navigator.push(context, FeedPostDetail.getRoute(model.key!));
+        }
       },
       child: Container(
         // ── Timeline Night card surface: #1E2329 with 16px radius ──
@@ -236,7 +238,6 @@ class _TweetCard extends StatelessWidget {
                 // Avatar
                 CircularImage(
                   path: user?.profilePic,
-                  width: 44,
                   height: 44,
                 ),
                 const SizedBox(width: 10),
@@ -279,46 +280,48 @@ class _TweetCard extends StatelessWidget {
             ),
 
             // ── Tweet body text ────────────────────────────────────────
-            if (model.description != null && model.description!.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                model.description!,
-                style: GoogleFonts.mulish(
-                  // Cinder Rust: off-white body text on dark card
-                  color: kOffWhiteColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 1.45,
+            if (model.description != null && model.description!.isNotEmpty) ...
+              [
+                const SizedBox(height: 10),
+                Text(
+                  model.description!,
+                  style: GoogleFonts.mulish(
+                    // Cinder Rust: off-white body text on dark card
+                    color: kOffWhiteColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
+                  ),
                 ),
-              ),
-            ],
+              ],
 
             // ── Tweet image ────────────────────────────────────────────
-            if (hasImage) ...[
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(kTweetCardRadius),
-                child: Image.network(
-                  model.imagePath!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      height: 180,
-                      color: kExtraLightColor,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: kEmeraldAccent,
-                          strokeWidth: 2,
+            if (hasImage) ...
+              [
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(kTweetCardRadius),
+                  child: Image.network(
+                    model.imagePath!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        height: 180,
+                        color: kExtraLightColor,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: kEmeraldAccent,
+                            strokeWidth: 2,
+                          ),
                         ),
                       );
-                    );
-                  },
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
 
             // ── Inline Like + Retweet action row ──────────────────────
             const SizedBox(height: 10),
