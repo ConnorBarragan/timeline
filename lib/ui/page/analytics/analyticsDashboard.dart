@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_twitter_clone/state/bookmarkState.dart';
 import 'package:flutter_twitter_clone/ui/page/analytics/analyticsTheme.dart';
+import 'package:flutter_twitter_clone/ui/page/analytics/bookmarkInsightsPage.dart';
 import 'package:flutter_twitter_clone/ui/page/analytics/notificationActivityPage.dart';
 import 'package:flutter_twitter_clone/ui/page/analytics/tweetAnalyticsPage.dart';
 import 'package:flutter_twitter_clone/ui/page/settings/settingsAndPrivacyPage.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 // ---------------------------------------------------------------------------
 // AnalyticsDashboard
@@ -18,7 +17,7 @@ import 'package:provider/provider.dart';
 // Tabs:
 //   0 – Overview    → TweetAnalyticsPage
 //   1 – Post Stats  → NotificationActivityPage
-//   2 – Bookmarks   → BookmarkInsightsPage  (placeholder until step 3)
+//   2 – Bookmarks   → BookmarkInsightsPage
 //   3 – Settings    → SettingsAndPrivacyPage
 //
 // Accent colour #F5C518; unselected #6B6B6B; rail background #2C2C2C.
@@ -71,15 +70,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
       case 1:
         return const NotificationActivityPage();
       case 2:
-        // BookmarkInsightsPage – implemented in step 3.
-        return ChangeNotifierProvider(
-          create: (_) => BookmarkState(),
-          child: const _PlaceholderPage(
-            title: 'Bookmarks',
-            subtitle: 'Bookmark Insights coming soon',
-            icon: Icons.bookmark_outline,
-          ),
-        );
+        return const BookmarkInsightsPage();
       case 3:
         return const SettingsAndPrivacyPage();
       default:
@@ -268,55 +259,4 @@ class _Destination {
   final String label;
   final IconData icon;
   final IconData activeIcon;
-}
-
-// ---------------------------------------------------------------------------
-// Placeholder page (used until step 3 screen is built)
-// ---------------------------------------------------------------------------
-
-class _PlaceholderPage extends StatelessWidget {
-  const _PlaceholderPage({
-    Key? key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  }) : super(key: key);
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kAnalyticsBackground,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 56, color: kAnalyticsPrimary),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: GoogleFonts.mulish(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: kAnalyticsOnSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: GoogleFonts.mulish(
-                  fontSize: 13,
-                  color: kAnalyticsPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
