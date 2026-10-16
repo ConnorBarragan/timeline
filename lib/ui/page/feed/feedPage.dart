@@ -41,7 +41,7 @@ class _FeedPageState extends State<FeedPage>
     super.build(context);
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: _FeedAppBar(),
+      appBar: const _FeedAppBar(),
       body: _TweetListBody(
         refreshIndicatorKey: widget.refreshIndicatorKey,
       ),
@@ -50,7 +50,7 @@ class _FeedPageState extends State<FeedPage>
 }
 
 // ---------------------------------------------------------------------------
-// _FeedAppBar – AppBar with title and Online Users stat badge
+// _FeedAppBar – dark #1C1410 AppBar with title and Online Users rust pill chip
 // ---------------------------------------------------------------------------
 
 class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -62,12 +62,13 @@ class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      // Cinder Rust: deep charcoal-brown AppBar background
+      backgroundColor: kSecondaryColor,
       elevation: 0,
       title: Text(
         'Feed',
         style: GoogleFonts.mulish(
-          color: kSecondaryColor,
+          color: kOffWhiteColor,
           fontWeight: FontWeight.w800,
           fontSize: 18,
         ),
@@ -82,7 +83,7 @@ class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _OnlineUsersBadge – chip showing the count of registered/online users
+// _OnlineUsersBadge – rust pill chip showing the count of registered/online users
 //
 // Bound to firebase_rtdb:profile via SearchState (the same node that
 // getDataFromDatabase() subscribes to).  Displays the total user count as a
@@ -103,9 +104,9 @@ class _OnlineUsersBadge extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: kPrimaryColor.withOpacity(0.12),
+              // Rust pill chip: solid rust fill for the badge
+              color: kPrimaryColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -122,7 +123,7 @@ class _OnlineUsersBadge extends StatelessWidget {
                 Text(
                   '$count online',
                   style: GoogleFonts.mulish(
-                    color: kPrimaryColor,
+                    color: kOffWhiteColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -137,7 +138,7 @@ class _OnlineUsersBadge extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetListBody – RefreshIndicator + ListView of tweet cards
+// _TweetListBody – RefreshIndicator (rust #C0522B) + ListView of tweet cards
 // ---------------------------------------------------------------------------
 
 class _TweetListBody extends StatelessWidget {
@@ -170,13 +171,20 @@ class _TweetListBody extends StatelessWidget {
 
         return RefreshIndicator(
           key: refreshIndicatorKey,
+          // Cinder Rust: rust refresh spinner
           color: kPrimaryColor,
+          backgroundColor: kExtraLightColor,
           onRefresh: () async {
             state.getDataFromDatabase();
           },
-          child: ListView.builder(
+          child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             itemCount: list!.length,
+            separatorBuilder: (_, __) => Divider(
+              color: kLightGreyColor,
+              height: 1,
+              thickness: 1,
+            ),
             itemBuilder: (context, index) => _TweetCard(model: list[index]),
           ),
         );
@@ -186,8 +194,7 @@ class _TweetListBody extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetCard – Material Card with avatar, name, handle, body, optional image,
-//              and inline Like / Retweet IconButtons
+// _TweetCard – dark #3A2E28 card with off-white text and taupe meta
 // ---------------------------------------------------------------------------
 
 class _TweetCard extends StatelessWidget {
@@ -203,12 +210,13 @@ class _TweetCard extends StatelessWidget {
     final hasImage = model.imagePath != null && model.imagePath!.isNotEmpty;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(kCardRadius),
       ),
       elevation: 0,
-      color: Colors.white,
+      // Cinder Rust: dark card surface #3A2E28
+      color: kExtraLightColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(kCardRadius),
         onTap: () {
@@ -237,7 +245,8 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           displayName,
                           style: GoogleFonts.mulish(
-                            color: kSecondaryColor,
+                            // Cinder Rust: off-white display name on dark card
+                            color: kOffWhiteColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
@@ -246,6 +255,7 @@ class _TweetCard extends StatelessWidget {
                         Text(
                           '@$userName',
                           style: GoogleFonts.mulish(
+                            // Cinder Rust: taupe handle text
                             color: kLightGreyColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
@@ -273,7 +283,8 @@ class _TweetCard extends StatelessWidget {
                 Text(
                   model.description!,
                   style: GoogleFonts.mulish(
-                    color: kSecondaryColor,
+                    // Cinder Rust: off-white body text on dark card
+                    color: kOffWhiteColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
