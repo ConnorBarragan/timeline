@@ -50,7 +50,7 @@ class _FeedPageState extends State<FeedPage>
 }
 
 // ---------------------------------------------------------------------------
-// _FeedAppBar – dark #1C1410 AppBar with title and Online Users rust pill chip
+// _FeedAppBar – dark #1C1410 AppBar with title and Online Users emerald badge
 // ---------------------------------------------------------------------------
 
 class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -83,7 +83,7 @@ class _FeedAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _OnlineUsersBadge – rust pill chip showing the count of registered/online users
+// _OnlineUsersBadge – emerald pill chip showing the count of registered/online users
 //
 // Bound to firebase_rtdb:profile via SearchState (the same node that
 // getDataFromDatabase() subscribes to).  Displays the total user count as a
@@ -104,8 +104,8 @@ class _OnlineUsersBadge extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              // Rust pill chip: solid rust fill for the badge
-              color: kPrimaryColor,
+              // Timeline Night: emerald accent for the badge
+              color: kEmeraldAccent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -138,7 +138,7 @@ class _OnlineUsersBadge extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetListBody – RefreshIndicator (rust #C0522B) + ListView of tweet cards
+// _TweetListBody – RefreshIndicator + ListView of tweet cards
 // ---------------------------------------------------------------------------
 
 class _TweetListBody extends StatelessWidget {
@@ -171,8 +171,8 @@ class _TweetListBody extends StatelessWidget {
 
         return RefreshIndicator(
           key: refreshIndicatorKey,
-          // Cinder Rust: rust refresh spinner
-          color: kPrimaryColor,
+          // Timeline Night: emerald accent for refresh spinner
+          color: kEmeraldAccent,
           backgroundColor: kExtraLightColor,
           onRefresh: () async {
             state.getDataFromDatabase();
@@ -194,7 +194,7 @@ class _TweetListBody extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// _TweetCard – dark #3A2E28 card with off-white text and taupe meta
+// _TweetCard – Timeline Night card with #1E2329 surface and 16px radius
 // ---------------------------------------------------------------------------
 
 class _TweetCard extends StatelessWidget {
@@ -209,124 +209,148 @@ class _TweetCard extends StatelessWidget {
     final userName = user?.userName ?? '';
     final hasImage = model.imagePath != null && model.imagePath!.isNotEmpty;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(kCardRadius),
-      ),
-      elevation: 0,
-      // Cinder Rust: dark card surface #3A2E28
-      color: kExtraLightColor,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(kCardRadius),
-        onTap: () {
-          final feedState = Provider.of<FeedState>(context, listen: false);
-          feedState.getPostDetailFromDatabase(null, model: model);
-          Navigator.push(context, FeedPostDetail.getRoute(model.key!));
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Avatar + name row ──────────────────────────────────────
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircularImage(
-                    path: user?.profilePic ?? Constants.dummyProfilePic,
-                    height: 44,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: GoogleFonts.mulish(
-                            // Cinder Rust: off-white display name on dark card
-                            color: kOffWhiteColor,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '@$userName',
-                          style: GoogleFonts.mulish(
-                            // Cinder Rust: taupe handle text
-                            color: kLightGreyColor,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Timestamp
-                  if (model.createdAt.isNotEmpty)
-                    Text(
-                      Utility.getPostTime2(model.createdAt),
-                      style: GoogleFonts.mulish(
-                        color: kLightGreyColor,
-                        fontSize: 11,
-                      ),
-                    ),
-                ],
-              ),
+    return GestureDetector(
+      onTap: () {
+        final feedState = Provider.of<FeedState>(context, listen: false);
+        feedState.getPostDetailFromDatabase(model.key, model: model);
+        Navigator.push(context, FeedPostDetail.getRoute(model.key));
+      },
+      child: Container(
+        // ── Timeline Night card surface: #1E2329 with 16px radius ──
+        decoration: BoxDecoration(
+          color: kTweetCardSurface,
+          borderRadius: BorderRadius.circular(kTweetCardRadius),
+          border: Border.all(
+            color: kBackgroundColor,
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Tweet header: avatar, name, handle, timestamp ────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar
+                CircularImage(
+                  path: user?.profilePic,
+                  width: 44,
+                  height: 44,
+                ),
+                const SizedBox(width: 10),
 
-              // ── Tweet body ─────────────────────────────────────────────
-              if (model.description != null &&
-                  model.description!.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                // Author info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: GoogleFonts.mulish(
+                          color: kOffWhiteColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '@$userName',
+                        style: GoogleFonts.mulish(
+                          color: kLightGreyColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Timestamp
                 Text(
-                  model.description!,
+                  _formatTime(model.createdAt),
                   style: GoogleFonts.mulish(
-                    // Cinder Rust: off-white body text on dark card
-                    color: kOffWhiteColor,
-                    fontSize: 14,
+                    color: kLightGreyColor,
                     fontWeight: FontWeight.w500,
-                    height: 1.45,
+                    fontSize: 11,
                   ),
                 ),
               ],
+            ),
 
-              // ── Tweet image ────────────────────────────────────────────
-              if (hasImage) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(kCardRadius),
-                  child: Image.network(
-                    model.imagePath!,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        height: 180,
-                        color: kExtraLightColor,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: kPrimaryColor,
-                            strokeWidth: 2,
-                          ),
+            // ── Tweet body text ────────────────────────────────────────
+            if (model.description != null && model.description!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                model.description!,
+                style: GoogleFonts.mulish(
+                  // Cinder Rust: off-white body text on dark card
+                  color: kOffWhiteColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
+                ),
+              ),
+            ],
+
+            // ── Tweet image ────────────────────────────────────────────
+            if (hasImage) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(kTweetCardRadius),
+                child: Image.network(
+                  model.imagePath!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      height: 180,
+                      color: kExtraLightColor,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: kEmeraldAccent,
+                          strokeWidth: 2,
                         ),
                       );
-                    },
-                  ),
+                    );
+                  },
                 ),
-              ],
-
-              // ── Inline Like + Retweet action row ──────────────────────
-              const SizedBox(height: 10),
-              _TweetActionRow(model: model),
+              ),
             ],
-          ),
+
+            // ── Inline Like + Retweet action row ──────────────────────
+            const SizedBox(height: 10),
+            _TweetActionRow(model: model),
+          ],
         ),
       ),
     );
+  }
+
+  /// Format timestamp to relative time (e.g., "2h", "1d")
+  String _formatTime(String? createdAt) {
+    if (createdAt == null) return '';
+    try {
+      final dateTime = DateTime.parse(createdAt);
+      final now = DateTime.now();
+      final diff = now.difference(dateTime);
+
+      if (diff.inMinutes < 1) {
+        return 'now';
+      } else if (diff.inMinutes < 60) {
+        return '${diff.inMinutes}m';
+      } else if (diff.inHours < 24) {
+        return '${diff.inHours}h';
+      } else if (diff.inDays < 7) {
+        return '${diff.inDays}d';
+      } else {
+        return dateTime.toString().split(' ')[0];
+      }
+    } catch (e) {
+      return '';
+    }
   }
 }
 
@@ -347,7 +371,7 @@ class _TweetActionRow extends StatelessWidget {
         _ActionButton(
           icon: Icons.chat_bubble_outline,
           count: model.commentCount ?? 0,
-          activeColor: kPrimaryColor,
+          activeColor: kEmeraldAccent,
           onTap: () {
             final feedState =
                 Provider.of<FeedState>(context, listen: false);

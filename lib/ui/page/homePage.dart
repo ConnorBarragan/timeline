@@ -209,7 +209,8 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: _currentIndex == _kFeedTab
           ? FloatingActionButton(
               onPressed: _openCompose,
-              backgroundColor: _kNavActive,
+              // Timeline Night: emerald accent for the FAB
+              backgroundColor: kEmeraldAccent,
               tooltip: 'Compose Tweet',
               child: const Icon(Icons.edit, color: Color(0xFFF2EDE8)),
             )
