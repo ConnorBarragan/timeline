@@ -38,6 +38,15 @@ const int _kMessagesTab = 3;
 const int _kBookmarksTab = 4;
 
 // ---------------------------------------------------------------------------
+// Cinder Rust palette constants (local aliases for readability)
+// ---------------------------------------------------------------------------
+const Color _kNavBackground = Color(0xFF1C1410);   // deep charcoal-brown
+const Color _kNavActive     = Color(0xFFC0522B);   // burnt rust
+const Color _kNavInactive   = Color(0xFF8C7B72);   // taupe
+const Color _kNavLabel      = Color(0xFFF2EDE8);   // warm off-white (active)
+const Color _kStackBg       = Color(0xFF2A1F1A);   // darkest cinder
+
+// ---------------------------------------------------------------------------
 // HomePage – BottomNavigationBar shell with 5 tabs
 //
 // Tabs:  0 = Feed  |  1 = Explore  |  2 = Notifications
@@ -194,14 +203,15 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: kBackgroundColor,
+      // Darkest cinder background for the IndexedStack container.
+      backgroundColor: _kStackBg,
       // FAB is only visible on the Feed tab (index 0).
       floatingActionButton: _currentIndex == _kFeedTab
           ? FloatingActionButton(
               onPressed: _openCompose,
-              backgroundColor: kPrimaryColor,
+              backgroundColor: _kNavActive,
               tooltip: 'Compose Tweet',
-              child: const Icon(Icons.edit, color: Colors.white),
+              child: const Icon(Icons.edit, color: Color(0xFFF2EDE8)),
             )
           : null,
       body: IndexedStack(
@@ -234,7 +244,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 // ---------------------------------------------------------------------------
-// _HomeBottomNav – 5-item BottomNavigationBar
+// _HomeBottomNav – 5-item BottomNavigationBar (Cinder Rust palette)
 // ---------------------------------------------------------------------------
 
 class _HomeBottomNav extends StatelessWidget {
@@ -251,23 +261,28 @@ class _HomeBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: kExtraLightColor)),
+        color: _kNavBackground,
+        border: Border(
+          top: BorderSide(color: Color(0xFF3A2E28), width: 1),
+        ),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: kPrimaryColor,
-        unselectedItemColor: kSecondaryColor,
+        // Transparent so the Container decoration shows through.
+        backgroundColor: Colors.transparent,
+        selectedItemColor: _kNavActive,
+        unselectedItemColor: _kNavInactive,
         selectedLabelStyle: GoogleFonts.mulish(
           fontWeight: FontWeight.w700,
           fontSize: 11,
+          color: _kNavActive,
         ),
         unselectedLabelStyle: GoogleFonts.mulish(
           fontWeight: FontWeight.w600,
           fontSize: 11,
+          color: _kNavInactive,
         ),
         elevation: 0,
         items: const [
