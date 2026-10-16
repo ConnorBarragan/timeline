@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_twitter_clone/state/bookmarkState.dart';
 import 'package:flutter_twitter_clone/ui/page/analytics/analyticsTheme.dart';
+import 'package:flutter_twitter_clone/ui/page/analytics/notificationActivityPage.dart';
 import 'package:flutter_twitter_clone/ui/page/analytics/tweetAnalyticsPage.dart';
 import 'package:flutter_twitter_clone/ui/page/settings/settingsAndPrivacyPage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,8 +17,8 @@ import 'package:provider/provider.dart';
 //
 // Tabs:
 //   0 – Overview    → TweetAnalyticsPage
-//   1 – Post Stats  → NotificationActivityPage  (placeholder until step 2)
-//   2 – Bookmarks   → BookmarkInsightsPage       (placeholder until step 3)
+//   1 – Post Stats  → NotificationActivityPage
+//   2 – Bookmarks   → BookmarkInsightsPage  (placeholder until step 3)
 //   3 – Settings    → SettingsAndPrivacyPage
 //
 // Accent colour #F5C518; unselected #6B6B6B; rail background #2C2C2C.
@@ -68,12 +69,7 @@ class _AnalyticsDashboardState extends State<AnalyticsDashboard> {
       case 0:
         return const TweetAnalyticsPage();
       case 1:
-        // NotificationActivityPage – implemented in step 2.
-        return const _PlaceholderPage(
-          title: 'Post Stats',
-          subtitle: 'Notification Activity coming soon',
-          icon: Icons.notifications_outlined,
-        );
+        return const NotificationActivityPage();
       case 2:
         // BookmarkInsightsPage – implemented in step 3.
         return ChangeNotifierProvider(
@@ -275,7 +271,7 @@ class _Destination {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder page (used until step 2 & 3 screens are built)
+// Placeholder page (used until step 3 screen is built)
 // ---------------------------------------------------------------------------
 
 class _PlaceholderPage extends StatelessWidget {
