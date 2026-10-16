@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_twitter_clone/model/feedModel.dart';
@@ -269,7 +270,7 @@ class _CumulativeLinePainter extends CustomPainter {
           text: val >= 1000 ? '${(val / 1000).toStringAsFixed(0)}k' : '$val',
           style: labelStyle,
         ),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(0, y - tp.height / 2));
     }
@@ -336,7 +337,7 @@ class _CumulativeLinePainter extends CustomPainter {
       final x = leftPad + (i / (points.length - 1).clamp(1, 9999)) * chartW;
       final tp = TextPainter(
         text: TextSpan(text: points[i].label, style: labelStyle),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       tp.paint(
         canvas,

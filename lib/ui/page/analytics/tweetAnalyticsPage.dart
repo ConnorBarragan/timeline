@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_twitter_clone/model/feedModel.dart';
@@ -379,7 +380,7 @@ class _LineAreaPainter extends CustomPainter {
     for (int i = 0; i < points.length; i++) {
       final tp = TextPainter(
         text: TextSpan(text: points[i].label, style: labelStyle),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       tp.paint(
         canvas,
@@ -402,7 +403,7 @@ class _LineAreaPainter extends CustomPainter {
           text: val >= 1000 ? '${(val / 1000).toStringAsFixed(0)}k' : '$val',
           style: labelStyle,
         ),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(0, y - tp.height / 2));
     }
