@@ -1,6 +1,6 @@
-/// Shared design tokens for the Timeline Dashboard redesign.
+/// Shared design tokens for the Timeline – Cinder Rust redesign.
 ///
-/// Import this file wherever you need the primary colour, card radius, or
+/// Import this file wherever you need palette colours, card radius, or
 /// a Mulish-based TextStyle helper.  The tokens are intentionally kept as
 /// plain `const` values so they can be used in `const` widget constructors.
 library app_theme;
@@ -9,29 +9,32 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ---------------------------------------------------------------------------
-// Colour palette
+// Cinder Rust colour palette
 // ---------------------------------------------------------------------------
 
-/// Twitter / Timeline primary blue.
-const Color kPrimaryColor = Color(0xFF1DA1F2);
+/// Burnt-rust primary – active indicators, FAB, accent icons.
+const Color kPrimaryColor = Color(0xFFC0522B);
 
-/// Near-black used for body text and headings.
-const Color kSecondaryColor = Color(0xFF14171A);
+/// Deep charcoal-brown – AppBar / BottomNav backgrounds.
+const Color kSecondaryColor = Color(0xFF1C1410);
 
-/// Mid-grey used for secondary text, timestamps, and icons.
-const Color kLightGreyColor = Color(0xFFAAB8C2);
+/// Taupe – secondary text, timestamps, dividers, borders.
+const Color kLightGreyColor = Color(0xFF8C7B72);
 
-/// Light divider / border colour.
-const Color kExtraLightColor = Color(0xFFE1E8ED);
+/// Dark card surface – tweet cards, activity cards.
+const Color kExtraLightColor = Color(0xFF3A2E28);
 
-/// Page background.
-const Color kBackgroundColor = Color(0xFFF5F8FA);
+/// Darkest cinder – page / IndexedStack background, compose body.
+const Color kBackgroundColor = Color(0xFF2A1F1A);
 
-/// Like / heart accent.
-const Color kLikeColor = Color(0xFFE0245E);
+/// Like / heart accent (kept distinct from primary for semantic clarity).
+const Color kLikeColor = Color(0xFFC0522B);
 
-/// Retweet / green accent.
-const Color kRetweetColor = Color(0xFF17BF63);
+/// Retweet accent (taupe-green neutral in dark theme).
+const Color kRetweetColor = Color(0xFF8C7B72);
+
+/// Warm off-white – primary text, icon fills on dark surfaces.
+const Color kOffWhiteColor = Color(0xFFF2EDE8);
 
 // ---------------------------------------------------------------------------
 // Geometry
@@ -53,7 +56,7 @@ const double kCardRadius = 12.0;
 TextStyle mulish({
   double fontSize = 14,
   FontWeight fontWeight = FontWeight.w500,
-  Color color = kSecondaryColor,
+  Color color = kOffWhiteColor,
   double? height,
 }) {
   return GoogleFonts.mulish(

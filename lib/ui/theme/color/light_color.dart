@@ -16,12 +16,26 @@ class TwitterColor {
   static Color paleSky50 = const Color.fromRGBO(101, 118, 133, 0.5);
 }
 
+/// Cinder Rust palette – used across all redesigned screens.
 class AppColor {
-  static const Color primary = Color(0xff1DA1F2);
-  static const Color secondary = Color(0xff14171A);
-  static const Color darkGrey = Color(0xff1657786);
-  static const Color lightGrey = Color(0xffAAB8C2);
-  static const Color extraLightGrey = Color(0xffE1E8ED);
-  static const Color extraExtraLightGrey = Color(0xfF5F8FA);
-  static const Color white = Color(0xFFffffff);
+  /// Burnt-rust primary: active indicators, FAB, accent icons.
+  static const Color primary = Color(0xFFC0522B);
+
+  /// Deep charcoal-brown: AppBar / BottomNav backgrounds.
+  static const Color secondary = Color(0xFF1C1410);
+
+  /// Darkest cinder: page / IndexedStack background, compose body.
+  static const Color darkGrey = Color(0xFF2A1F1A);
+
+  /// Taupe: secondary text, timestamps, dividers, borders.
+  static const Color lightGrey = Color(0xFF8C7B72);
+
+  /// Dark card surface: tweet cards, activity cards.
+  static const Color extraLightGrey = Color(0xFF3A2E28);
+
+  /// Warm off-white: primary text, icon fills on dark surfaces.
+  static const Color extraExtraLightGrey = Color(0xFFF2EDE8);
+
+  /// Alias kept for backward-compat with widgets that reference AppColor.white.
+  static const Color white = Color(0xFFF2EDE8);
 }

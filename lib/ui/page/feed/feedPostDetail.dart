@@ -8,6 +8,7 @@ import 'package:flutter_twitter_clone/ui/theme/theme.dart';
 import 'package:flutter_twitter_clone/widgets/customWidgets.dart';
 import 'package:flutter_twitter_clone/widgets/tweet/tweet.dart';
 import 'package:flutter_twitter_clone/widgets/tweet/widgets/tweetBottomSheet.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class FeedPostDetail extends StatefulWidget {
@@ -29,12 +30,14 @@ class FeedPostDetail extends StatefulWidget {
 class _FeedPostDetailState extends State<FeedPostDetail> {
   late String postId;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     postId = widget.postId;
     super.initState();
   }
 
+  /// FAB – rust fill #C0522B, off-white icon.
   Widget _floatingActionButton() {
     return FloatingActionButton(
       onPressed: () {
@@ -42,27 +45,41 @@ class _FeedPostDetailState extends State<FeedPostDetail> {
         state.setTweetToReply = state.tweetDetailModel!.last;
         Navigator.of(context).pushNamed('/ComposeTweetPage/' + postId);
       },
+      backgroundColor: AppColor.primary,
+      foregroundColor: AppColor.extraExtraLightGrey,
       child: const Icon(Icons.add),
     );
   }
 
+  /// Reply row – card background #2A1F1A.
   Widget _commentRow(FeedModel model) {
-    return Tweet(
-      model: model,
-      type: TweetType.Reply,
-      trailing: TweetBottomSheet().tweetOptionIcon(context,
-          scaffoldKey: scaffoldKey, model: model, type: TweetType.Reply),
-      scaffoldKey: scaffoldKey,
+    return Container(
+      color: AppColor.darkGrey,
+      child: Tweet(
+        model: model,
+        type: TweetType.Reply,
+        trailing: TweetBottomSheet().tweetOptionIcon(context,
+            scaffoldKey: scaffoldKey, model: model, type: TweetType.Reply),
+        scaffoldKey: scaffoldKey,
+      ),
     );
   }
 
+  /// Tweet detail card – background #3A2E28, border-radius 12px.
   Widget _tweetDetail(FeedModel model) {
-    return Tweet(
-      model: model,
-      type: TweetType.Detail,
-      trailing: TweetBottomSheet().tweetOptionIcon(context,
-          scaffoldKey: scaffoldKey, model: model, type: TweetType.Detail),
-      scaffoldKey: scaffoldKey,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColor.extraLightGrey,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Tweet(
+        model: model,
+        type: TweetType.Detail,
+        trailing: TweetBottomSheet().tweetOptionIcon(context,
+            scaffoldKey: scaffoldKey, model: model, type: TweetType.Detail),
+        scaffoldKey: scaffoldKey,
+      ),
     );
   }
 
@@ -96,53 +113,63 @@ class _FeedPostDetailState extends State<FeedPostDetail> {
       child: Scaffold(
         key: scaffoldKey,
         floatingActionButton: _floatingActionButton(),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        // Darkest cinder background #2A1F1A
+        backgroundColor: AppColor.darkGrey,
         body: CustomScrollView(
           slivers: <Widget>[
+            // AppBar – background #1C1410, off-white title
             SliverAppBar(
               pinned: true,
-              title: customTitleText(
+              backgroundColor: AppColor.secondary,
+              iconTheme:
+                  const IconThemeData(color: AppColor.extraExtraLightGrey),
+              title: Text(
                 'Thread',
+                style: GoogleFonts.mulish(
+                  color: AppColor.extraExtraLightGrey,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1.0),
                 child: Container(
-                  color: Colors.grey.shade200,
+                  color: AppColor.extraLightGrey,
                   height: 1.0,
                 ),
-                preferredSize: const Size.fromHeight(0.0),
               ),
             ),
+
+            // Tweet Detail Card – #3A2E28 background, radius 12px
             SliverList(
               delegate: SliverChildListDelegate(
                 [
                   state.tweetDetailModel == null ||
                           state.tweetDetailModel!.isEmpty
-                      ? Container()
+                      ? const SizedBox.shrink()
                       : _tweetDetail(state.tweetDetailModel!.last),
+                  // Separator between detail and replies – taupe #8C7B72
                   Container(
                     height: 6,
                     width: double.infinity,
-                    color: TwitterColor.mystic,
-                  )
+                    color: AppColor.lightGrey,
+                  ),
                 ],
               ),
             ),
+
+            // Reply SliverList – thread line #8C7B72, card bg #2A1F1A
             SliverList(
               delegate: SliverChildListDelegate(
                 state.tweetReplyMap == null ||
                         state.tweetReplyMap!.isEmpty ||
                         state.tweetReplyMap![postId] == null
-                    ? [
-                        //!Removed container
-                        const Center()
-                      ]
+                    ? [const Center()]
                     : state.tweetReplyMap![postId]!
                         .map((x) => _commentRow(x))
                         .toList(),
               ),
-            )
+            ),
           ],
         ),
       ),

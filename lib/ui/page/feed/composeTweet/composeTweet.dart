@@ -10,13 +10,21 @@ import 'package:flutter_twitter_clone/state/feedState.dart';
 import 'package:flutter_twitter_clone/state/searchState.dart';
 import 'package:flutter_twitter_clone/ui/page/feed/composeTweet/state/composeTweetState.dart';
 import 'package:flutter_twitter_clone/ui/page/profile/widgets/circular_image.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:translator/translator.dart';
 
-const Color _kPrimary = Color(0xFF1DA1F2);
-const Color _kCardSurface = Color(0xFF14171A);
+// ---------------------------------------------------------------------------
+// Cinder Rust palette tokens (local aliases for readability)
+// ---------------------------------------------------------------------------
+const Color _kPrimary = kPrimaryColor;          // #C0522B – rust
+const Color _kBackground = kBackgroundColor;    // #2A1F1A – compose body bg
+const Color _kAppBar = kSecondaryColor;         // #1C1410 – AppBar bg
+const Color _kCard = kExtraLightColor;          // #3A2E28 – image preview border / mention list
+const Color _kOffWhite = kOffWhiteColor;        // #F2EDE8 – primary text / icons
+const Color _kTaupe = kLightGreyColor;          // #8C7B72 – counter / hint / secondary text
 
 // ---------------------------------------------------------------------------
 // ComposeTweetPage – kept as a full-page route for back-compat (retweet/reply)
@@ -130,12 +138,15 @@ class _ComposeTweetPageState extends State<ComposeTweetPage> {
   Widget build(BuildContext context) {
     final authState = Provider.of<AuthState>(context, listen: false);
     return Scaffold(
-      backgroundColor: Colors.white,
+      // Compose body background: #2A1F1A
+      backgroundColor: _kBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        // AppBar background: #1C1410
+        backgroundColor: _kAppBar,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: _kCardSurface),
+          // Close icon: #F2EDE8
+          icon: const Icon(Icons.close, color: _kOffWhite),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -144,22 +155,29 @@ class _ComposeTweetPageState extends State<ComposeTweetPage> {
             child: ElevatedButton(
               onPressed: _canSubmit ? _submit : null,
               style: ElevatedButton.styleFrom(
+                // Tweet button fill: rust #C0522B
                 backgroundColor: _kPrimary,
-                foregroundColor: Colors.white,
+                // Tweet button text: #F2EDE8
+                foregroundColor: _kOffWhite,
+                disabledBackgroundColor: _kPrimary.withOpacity(0.45),
+                disabledForegroundColor: _kOffWhite.withOpacity(0.6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: _isSubmitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2, color: _kOffWhite),
                     )
                   : Text(
                       'Tweet',
-                      style: GoogleFonts.mulish(fontWeight: FontWeight.w800),
+                      style: GoogleFonts.mulish(
+                        fontWeight: FontWeight.w800,
+                        color: _kOffWhite,
+                      ),
                     ),
             ),
           ),
@@ -224,7 +242,7 @@ class _ComposeTweetBody extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Character counter
+                    // Character counter: taupe #8C7B72 (red/orange when near limit)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -235,20 +253,21 @@ class _ComposeTweetBody extends StatelessWidget {
                                 ? Colors.red
                                 : remaining < 20
                                     ? Colors.orange
-                                    : _kPrimary,
+                                    : _kTaupe,
                             fontWeight: FontWeight.w700,
                             fontSize: 13,
                           ),
                         ),
                       ],
                     ),
-                    // Text field
+                    // Text field – caret rust #C0522B
                     Consumer<ComposeTweetState>(
                       builder: (context, composeState, _) {
                         return TextField(
                           controller: controller,
                           maxLines: null,
                           autofocus: true,
+                          cursorColor: _kPrimary,
                           onChanged: (text) {
                             onChanged(text);
                             try {
@@ -259,7 +278,10 @@ class _ComposeTweetBody extends StatelessWidget {
                                   text, searchState);
                             } catch (_) {}
                           },
-                          style: GoogleFonts.mulish(fontSize: 16),
+                          style: GoogleFonts.mulish(
+                            fontSize: 16,
+                            color: _kOffWhite,
+                          ),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: isTweet
@@ -268,7 +290,7 @@ class _ComposeTweetBody extends StatelessWidget {
                                     ? 'Add a comment'
                                     : 'Tweet your reply',
                             hintStyle: GoogleFonts.mulish(
-                              color: Colors.grey,
+                              color: _kTaupe,
                               fontSize: 16,
                             ),
                           ),
@@ -287,13 +309,13 @@ class _ComposeTweetBody extends StatelessWidget {
                         if (users == null || users.isEmpty) {
                           return const SizedBox.shrink();
                         }
+                        // Mention dropdown: card surface #3A2E28, border taupe #8C7B72
                         return Container(
                           constraints: const BoxConstraints(maxHeight: 200),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            border:
-                                Border.all(color: const Color(0xFFE1E8ED)),
-                            borderRadius: BorderRadius.circular(12),
+                            color: _kCard,
+                            border: Border.all(color: _kTaupe),
+                            borderRadius: BorderRadius.circular(kCardRadius),
                           ),
                           child: ListView.builder(
                             shrinkWrap: true,
@@ -306,12 +328,16 @@ class _ComposeTweetBody extends StatelessWidget {
                                 title: Text(
                                   user.displayName ?? '',
                                   style: GoogleFonts.mulish(
-                                      fontWeight: FontWeight.w700),
+                                    fontWeight: FontWeight.w700,
+                                    color: _kOffWhite,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   '@${user.userName ?? ''}',
                                   style: GoogleFonts.mulish(
-                                      color: Colors.grey, fontSize: 12),
+                                    color: _kTaupe,
+                                    fontSize: 12,
+                                  ),
                                 ),
                                 onTap: () {
                                   controller.text = composeState
@@ -333,7 +359,7 @@ class _ComposeTweetBody extends StatelessWidget {
               ),
             ],
           ),
-          // Image preview
+          // Image preview – border #3A2E28
           if (image != null) ...[
             const SizedBox(height: 12),
             Stack(
@@ -342,7 +368,8 @@ class _ComposeTweetBody extends StatelessWidget {
                   height: 180,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(kCardRadius),
+                    border: Border.all(color: _kCard, width: 2),
                     image: DecorationImage(
                       image: FileImage(image!),
                       fit: BoxFit.cover,
@@ -361,7 +388,7 @@ class _ComposeTweetBody extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(4),
                       child: const Icon(Icons.close,
-                          color: Colors.white, size: 18),
+                          color: _kOffWhite, size: 18),
                     ),
                   ),
                 ),
@@ -372,6 +399,7 @@ class _ComposeTweetBody extends StatelessWidget {
           // Bottom toolbar
           Row(
             children: [
+              // Image picker icon: rust #C0522B
               IconButton(
                 icon: const Icon(Icons.image_outlined, color: _kPrimary),
                 onPressed: () async {
@@ -473,7 +501,8 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        // Bottom sheet background: compose body #2A1F1A
+        color: _kBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.only(
@@ -490,12 +519,12 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: _kTaupe,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 12),
-          // Header
+          // Header row
           Row(
             children: [
               CircularImage(
@@ -506,10 +535,10 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
               Expanded(
                 child: Text(
                   "What's happening?",
-                  style: GoogleFonts.mulish(color: Colors.grey, fontSize: 15),
+                  style: GoogleFonts.mulish(color: _kTaupe, fontSize: 15),
                 ),
               ),
-              // Character counter
+              // Character counter: taupe #8C7B72
               Text(
                 '$_remaining',
                 style: GoogleFonts.mulish(
@@ -517,7 +546,7 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                       ? Colors.red
                       : _remaining < 20
                           ? Colors.orange
-                          : _kPrimary,
+                          : _kTaupe,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -535,6 +564,8 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                     controller: _controller,
                     maxLines: null,
                     autofocus: true,
+                    // Caret rust #C0522B
+                    cursorColor: _kPrimary,
                     onChanged: (text) {
                       setState(() {});
                       try {
@@ -543,10 +574,14 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                         composeState.onDescriptionChanged(text, searchState);
                       } catch (_) {}
                     },
-                    style: GoogleFonts.mulish(fontSize: 16),
-                    decoration: const InputDecoration(
+                    style: GoogleFonts.mulish(
+                      fontSize: 16,
+                      color: _kOffWhite,
+                    ),
+                    decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: "What's happening?",
+                      hintStyle: GoogleFonts.mulish(color: _kTaupe),
                     ),
                   ),
                   // Mention suggestion list
@@ -557,13 +592,13 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                         if (users == null || users.isEmpty) {
                           return const SizedBox.shrink();
                         }
+                        // Mention dropdown: card surface #3A2E28, border taupe #8C7B72
                         return Container(
                           constraints: const BoxConstraints(maxHeight: 160),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(
-                                color: const Color(0xFFE1E8ED)),
-                            borderRadius: BorderRadius.circular(12),
+                            color: _kCard,
+                            border: Border.all(color: _kTaupe),
+                            borderRadius: BorderRadius.circular(kCardRadius),
                           ),
                           child: ListView.builder(
                             shrinkWrap: true,
@@ -577,13 +612,17 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                                 title: Text(
                                   user.displayName ?? '',
                                   style: GoogleFonts.mulish(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: _kOffWhite,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   '@${user.userName ?? ''}',
                                   style: GoogleFonts.mulish(
-                                      color: Colors.grey, fontSize: 11),
+                                    color: _kTaupe,
+                                    fontSize: 11,
+                                  ),
                                 ),
                                 onTap: () {
                                   _controller.text = composeState
@@ -605,7 +644,7 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
               );
             },
           ),
-          // Image preview
+          // Image preview – border #3A2E28
           if (_image != null) ...[
             const SizedBox(height: 8),
             Stack(
@@ -614,7 +653,8 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                   height: 100,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(kCardRadius),
+                    border: Border.all(color: _kCard, width: 2),
                     image: DecorationImage(
                       image: FileImage(_image!),
                       fit: BoxFit.cover,
@@ -633,7 +673,7 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                       ),
                       padding: const EdgeInsets.all(3),
                       child: const Icon(Icons.close,
-                          color: Colors.white, size: 16),
+                          color: _kOffWhite, size: 16),
                     ),
                   ),
                 ),
@@ -643,6 +683,7 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
           // Toolbar
           Row(
             children: [
+              // Image picker icon: rust #C0522B
               IconButton(
                 icon: const Icon(Icons.image_outlined, color: _kPrimary),
                 onPressed: () async {
@@ -656,11 +697,14 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                 },
               ),
               const Spacer(),
+              // Tweet submit button: rust fill #C0522B, text #F2EDE8
               ElevatedButton(
                 onPressed: _canSubmit ? _submit : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kPrimary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: _kOffWhite,
+                  disabledBackgroundColor: _kPrimary.withOpacity(0.45),
+                  disabledForegroundColor: _kOffWhite.withOpacity(0.6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -668,17 +712,18 @@ class _ComposeTweetBottomSheetState extends State<ComposeTweetBottomSheet> {
                       horizontal: 20, vertical: 10),
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2, color: _kOffWhite),
                       )
                     : Text(
                         'Tweet',
                         style: GoogleFonts.mulish(
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
+                          color: _kOffWhite,
                         ),
                       ),
               ),

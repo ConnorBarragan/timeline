@@ -5,6 +5,7 @@ import 'package:flutter_twitter_clone/model/feedModel.dart';
 import 'package:flutter_twitter_clone/model/user.dart';
 import 'package:flutter_twitter_clone/state/authState.dart';
 import 'package:flutter_twitter_clone/state/feedState.dart';
+import 'package:flutter_twitter_clone/ui/theme/app_theme.dart';
 import 'package:flutter_twitter_clone/widgets/cache_image.dart';
 import 'package:flutter_twitter_clone/widgets/tweet/widgets/tweetIconsRow.dart';
 import 'package:provider/provider.dart';
@@ -33,103 +34,130 @@ class _ImageViewPgeState extends State<ImageViewPge> {
     var state = Provider.of<FeedState>(context);
     return Stack(
       children: <Widget>[
-        SingleChildScrollView(
-          child: Container(
-            color: Colors.brown.shade700,
-            constraints: const BoxConstraints(
-              maxHeight: double.infinity,
-            ),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  isToolAvailable = !isToolAvailable;
-                });
-              },
-              child: _imageFeed(state.tweetDetailModel!.last.imagePath),
+        // ── Full-screen image on deep charcoal background ──────────────────
+        Container(
+          color: kSecondaryColor, // #1C1410
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxHeight: double.infinity,
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    isToolAvailable = !isToolAvailable;
+                  });
+                },
+                child: _imageFeed(state.tweetDetailModel!.last.imagePath),
+              ),
             ),
           ),
         ),
-        !isToolAvailable
-            ? Container()
-            : Align(
-                alignment: Alignment.topLeft,
-                child: SafeArea(
-                  child: Container(
-                      width: 50,
-                      height: 50,
-                      alignment: Alignment.topLeft,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.brown.shade700.withAlpha(200),
-                      ),
-                      child: Wrap(
-                        children: const <Widget>[
-                          BackButton(
-                            color: Colors.white,
-                          ),
-                        ],
-                      )),
-                )),
-        !isToolAvailable
-            ? Container()
-            : Align(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    TweetIconsRow(
-                      model: state.tweetDetailModel!.last,
-                      iconColor: Theme.of(context).colorScheme.onPrimary,
-                      iconEnableColor: Theme.of(context).colorScheme.onPrimary,
-                      scaffoldKey: GlobalKey<ScaffoldState>(),
-                    ),
-                    Container(
-                      color: Colors.brown.shade700.withAlpha(200),
-                      padding: const EdgeInsets.only(
-                          right: 10, left: 10, bottom: 10),
-                      child: TextField(
-                        controller: _textEditingController,
-                        maxLines: null,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          fillColor: Colors.blue,
-                          border: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(30.0),
-                            ),
-                            borderSide: BorderSide(
-                              color: Colors.white,
-                            ),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(30.0),
-                            ),
-                            borderSide: BorderSide(
-                              color: Colors.white,
-                            ),
-                          ),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              _submitButton();
-                            },
-                            icon: const Icon(Icons.send, color: Colors.white),
-                          ),
-                          focusColor: Colors.black,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-                          hintText: 'Comment here..',
-                          hintStyle: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+
+        // ── Black scrim overlay ────────────────────────────────────────────
+        IgnorePointer(
+          child: Container(
+            color: Colors.black.withAlpha(100),
+          ),
+        ),
+
+        // ── Back button – top-left circle ──────────────────────────────────
+        if (isToolAvailable)
+          Align(
+            alignment: Alignment.topLeft,
+            child: SafeArea(
+              child: Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: kExtraLightColor, // #3A2E28
+                ),
+                child: const BackButton(
+                  color: kOffWhiteColor, // #F2EDE8
                 ),
               ),
+            ),
+          ),
+
+        // ── Bottom overlay: icon row + comment field ───────────────────────
+        if (isToolAvailable)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                // Tweet icon row – icons off-white, active like rust
+                Container(
+                  color: kSecondaryColor.withAlpha(210), // #1C1410 scrim
+                  child: TweetIconsRow(
+                    model: state.tweetDetailModel!.last,
+                    iconColor: kOffWhiteColor,       // #F2EDE8
+                    iconEnableColor: kPrimaryColor,  // #C0522B (active like)
+                    scaffoldKey: GlobalKey<ScaffoldState>(),
+                  ),
+                ),
+
+                // Inline comment TextField
+                Container(
+                  color: kSecondaryColor.withAlpha(210),
+                  padding: const EdgeInsets.only(
+                      right: 10, left: 10, bottom: 10),
+                  child: TextField(
+                    controller: _textEditingController,
+                    maxLines: null,
+                    cursorColor: kPrimaryColor, // #C0522B
+                    style: mulish(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: kOffWhiteColor, // #F2EDE8
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: kExtraLightColor, // #3A2E28
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: const BorderSide(
+                          color: kLightGreyColor, // #8C7B72
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: const BorderSide(
+                          color: kLightGreyColor, // #8C7B72
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: const BorderSide(
+                          color: kPrimaryColor, // #C0522B when focused
+                          width: 1.5,
+                        ),
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: _submitButton,
+                        icon: const Icon(
+                          Icons.send,
+                          color: kPrimaryColor, // #C0522B
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      hintText: 'Comment here..',
+                      hintStyle: mulish(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: kLightGreyColor, // #8C7B72
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -191,6 +219,9 @@ class _ImageViewPgeState extends State<ImageViewPge> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _body());
+    return Scaffold(
+      backgroundColor: kSecondaryColor, // #1C1410
+      body: _body(),
+    );
   }
 }
